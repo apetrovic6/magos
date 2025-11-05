@@ -1,11 +1,11 @@
 { inputs, ... }:{
-flake.homeModules.ghostty = {config, lib, pkgs, ... }:
+flake.homeModules.core.ghostty = {config, lib, pkgs, ... }:
 let
   inherit (lib) types mkOption mkEnableOption;
-  cfg = config.magos.hm.ghostty;
+  cfg = config.magos.hm.core.ghostty;
 in
 {
-  options.magos.hm.ghostty = {
+  options.magos.hm.core.ghostty = {
       enable = mkEnableOption "Enable and setup Ghostty";
 
       enableBashIntegration = mkOption { 

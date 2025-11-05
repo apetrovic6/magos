@@ -1,11 +1,11 @@
 { inputs, ... }:{
-flake.homeModules.starship = {config, lib, pkgs, ... }:
+flake.homeModules.core.starship = {config, lib, pkgs, ... }:
 let
   inherit (lib) types mkOption mkEnableOption;
-  cfg = config.magos.hm.starship;
+  cfg = config.magos.hm.core.starship;
 in
 {
-  options.magos.hm.starship = {
+  options.magos.hm.core.starship = {
       enable = mkEnableOption "Enable and setup starship";
   };
 

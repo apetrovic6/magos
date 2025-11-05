@@ -1,11 +1,11 @@
 { inputs, ... }:{
-flake.homeModules.walker = {config, lib, pkgs, ... }:
+flake.homeModules.core.walker = {config, lib, pkgs, ... }:
 let
   inherit (lib) types mkOption mkEnableOption;
-  cfg = config.magos.hm.walker;
+  cfg = config.magos.hm.core.walker;
 in
 {
-  options.magos.hm.walker = {
+  options.magos.hm.core.walker = {
       enable = mkEnableOption "Enable and setup walker";
   };
 

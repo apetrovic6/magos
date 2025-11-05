@@ -1,11 +1,11 @@
 { inputs, ... }:{
-flake.homeModules.stylix = {config, lib, pkgs, ... }:
+flake.homeModules.core.stylix = {config, lib, pkgs, ... }:
 let
   inherit (lib) types mkOption mkEnableOption;
-  cfg = config.magos.hm.stylix;
+  cfg = config.magos.hm.core.stylix;
 in
 {
-  options.magos.hm.stylix = {
+  options.magos.hm.core.stylix = {
       enable = mkEnableOption "Enable and setup stylix";
 
       image = mkOption {

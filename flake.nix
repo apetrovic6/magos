@@ -35,7 +35,7 @@
         #   3. Add here: foo.flakeModule
         (import-tree ./modules)
         inputs.home-manager.flakeModules.home-manager
-
+        ./lib/utils/merge-hm-modules.nix
       ];
       systems = [ "x86_64-linux" "aarch64-linux" ];
 

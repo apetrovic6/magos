@@ -1,11 +1,11 @@
 {inputs, ... }:{
-flake.nixosModules.stylix = {config, lib, pkgs, ... }:
+flake.nixosModules.core.stylix = {config, lib, pkgs, ... }:
 let
   inherit (lib) mkIf mkOption mkEnableOption types;
-  cfg = config.magos.stylix;
+  cfg = config.magos.core.stylix;
 in
   {
-  options.magos.stylix = {
+  options.magos.core.stylix = {
       enable = mkEnableOption "Install and setup Stylix";
 
       image = mkOption {
