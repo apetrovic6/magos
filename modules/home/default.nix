@@ -1,7 +1,9 @@
 
-{ inputs, ... }:{
-flake.homeManagerModules = {config, lib, pkgs, ... }:
+{ inputs,self, ... }:{
+flake.homeManagerModules.default = {config, lib, pkgs, ... }:
   {
-      magos.hm.wezterm.enable = true;
+      imports = [ self.homeModules.ghostty ];
+
+      magos.hm.ghostty.enable = false;
   };
 }
