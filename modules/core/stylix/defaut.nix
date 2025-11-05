@@ -5,12 +5,8 @@ let
   cfg = config.magos.stylix;
 in
   {
-  imports = [
-    inputs.stylix.nixosModules.stylix
-  ];
-
   options.magos.stylix = {
-      enable = lib.mkEnableOption "Install and setup Stylix";
+      enable = mkEnableOption "Install and setup Stylix";
 
       image = mkOption {
       type = types.path;
@@ -45,3 +41,4 @@ in
    };
   };
 }
+
