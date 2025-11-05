@@ -1,5 +1,5 @@
 { inputs, ... }:{
-flake.homeModules.core.ghostty = {config, lib, pkgs, ... }:
+flake.homeModules.ghostty = {config, lib, pkgs, ... }:
 let
   inherit (lib) types mkOption mkEnableOption;
   cfg = config.magos.hm.core.ghostty;

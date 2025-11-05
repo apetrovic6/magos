@@ -1,5 +1,5 @@
 { inputs, ... }:{
-flake.homeModules.core.starship = {config, lib, pkgs, ... }:
+flake.homeModules.starship = {config, lib, pkgs, ... }:
 let
   inherit (lib) types mkOption mkEnableOption;
   cfg = config.magos.hm.core.starship;

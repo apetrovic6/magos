@@ -1,6 +1,6 @@
 {inputs, ...}:
 {
-  flake.homeModels.hyprlock = { config, lib, pkgs, ...} :
+  flake.homeModules.hyprlock = { config, lib, pkgs, ...} :
     let
       inherit (lib) types mkOption mkIf mkEnableOption;
       cfg = config.magos.hm.hyprlock;

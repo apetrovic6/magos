@@ -1,5 +1,5 @@
 { inputs, ... }:{
-flake.nixosModules.core.cowsay = {config, lib, pkgs, ... }:
+flake.nixosModules.cowsay = {config, lib, pkgs, ... }:
 let
   cfg = config.magos.core.cowsay;
 in
