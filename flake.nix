@@ -13,6 +13,11 @@
       url = "github:vic/import-tree";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs@{ flake-parts, import-tree, ... }:
@@ -24,7 +29,7 @@
         #   2. Add foo as a parameter to the outputs function
         #   3. Add here: foo.flakeModule
         (import-tree ./modules)
-
+        inputs.home-manager.flakeModules.home-manager
       ];
       systems = [ "x86_64-linux" "aarch64-linux" ];
 
@@ -34,13 +39,13 @@
         # system.
 
         # Equivalent to  inputs'.nixpkgs.legacyPackages.hello;
-        packages.default = pkgs.hello;
+        # packages.default = pkgs.hello;
       };
       flake = {
         # The usual flake attributes can be defined here, including system-
         # agnostic ones like nixosModule and system-enumerating ones, although
         # those are more easily expressed in perSystem.
-
+        #
       };
     };
 }

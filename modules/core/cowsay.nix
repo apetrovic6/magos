@@ -1,4 +1,5 @@
-{ lib, pkgs, config, ... }:
+{ inputs, ... }:{
+flake.nixosModules.cowsay = {config, lib, pkgs, ... }:
 let
   cfg = config.magos.cowsay;
 in
@@ -8,4 +9,5 @@ in
   config = lib.mkIf cfg.enable {
     environment.systemPackages = [ pkgs.cowsay ];
   };
+};
 }
