@@ -2,6 +2,6 @@
 { inputs, ... }:{
 flake.homeManagerModules = {config, lib, pkgs, ... }:
   {
-      options.magos.hm.ghostty.enable = true;
+      magos.hm.wezterm.enable = true;
   };
 }

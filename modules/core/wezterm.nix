@@ -1,10 +1,10 @@
 { inputs, ... }:{
 flake.homeModules.ghostty = {config, lib, pkgs, ... }:
 let
-  cfg = config.magos.hm.ghostty;
+  cfg = config.magos.hm.wezterm;
 in
 {
-  options.magos.hm.ghostty.enable = lib.mkEnableOption "Install ghostty";
+  options.magos.hm.wezterm.enable = lib.mkEnableOption "Install wezterm";
 
   config = lib.mkIf cfg.enable {
         programs.wezterm = {
