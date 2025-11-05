@@ -1,5 +1,5 @@
 { inputs, ... }:{
-flake.homeModules.stylix = {config, lib, pkgs, ... }:
+flake.homeModules.core.stylix = { config, lib, pkgs, ... }:
 let
   inherit (lib) types mkOption mkEnableOption;
   cfg = config.magos.hm.core.stylix;
@@ -29,30 +29,18 @@ options.magos.hm.core.stylix.palette = lib.mkOption {
   };
 
 
-  options.magos.hm.core.stylix = {
-      enable = mkEnableOption "Enable and setup stylix";
+ options.magos.hm.core.stylix = {
+  enable = lib.mkEnableOption "Enable and setup stylix";
+  image  = lib.mkOption { type = lib.types.nullOr lib.types.path; default = null; };
+  polarity = lib.mkOption { type = lib.types.enum [ "light" "dark" ]; default = "dark"; };
+};
 
-      image = mkOption {
-      type = types.path;
-      description = "Path to the wallpaper image to use.";
-    };
-
-
-    polarity = mkOption {
-      type = types.enum [ "light" "dark" ];
-      default = "dark";
-      description = "Polarity of the theme.";
-    };
-  };
-
-    config = lib.mkIf cfg.enable {
-  
-
-        stylix = {
-          enable = true;
+config = lib.mkIf cfg.enable {
+  stylix = {
+    enable = true;
     autoEnable = true;
-    image = cfg.image;
     polarity = cfg.polarity;
+  } // lib.optionalAttrs (cfg.image != null) { image = cfg.image; };
 
     opacity = {
       terminal = 0.8;
@@ -141,5 +129,4 @@ options.magos.hm.core.stylix.palette = lib.mkOption {
 
     };
   };
-};
 }

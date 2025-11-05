@@ -1,12 +1,15 @@
 
 { inputs,self, ... }:{
 
-# flake.nixosModules.terminal = {config, lib, pkgs, ...}:
-#   {
-#       environment.systemPackages = with pkgs; [
-#         ghostty
-#       ];
-#   };
+flake.nixosModules.default = {config, lib, pkgs, ...}:
+  {
+      imports = [
+        self.nixosModules.stylix
+      ];
+      environment.systemPackages = with pkgs; [
+        wezterm
+      ];
+  };
 
 flake.homeManagerModules.default = {config, lib, pkgs, ... }:
     let
@@ -19,6 +22,8 @@ flake.homeManagerModules.default = {config, lib, pkgs, ... }:
         self.homeModules.ghostty 
         self.homeModules.starship
         self.homeModules.walker
+
+        self.homeManagerModules.stylix
       ];
 
         nix.settings = {

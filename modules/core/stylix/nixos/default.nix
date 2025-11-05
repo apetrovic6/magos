@@ -1,5 +1,5 @@
 {inputs, ... }:{
-flake.nixosModules.stylix = {config, lib, pkgs, ... }:
+  flake.nixosModules.core.stylix = { config, lib, pkgs, ... }:
 let
   inherit (lib) mkIf mkOption mkEnableOption types;
   cfg = config.magos.core.stylix;

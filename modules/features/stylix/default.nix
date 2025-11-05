@@ -1,21 +1,23 @@
 
-
-{ inputs,self, ... }:{
-flake.nixosModules.stylix = {config, lib, pkgs, ... }:
+# modules/features/stylix/default.nix (or wherever you keep it)
+{ self, inputs, lib, ... }:
 {
-  imports = [
-    inputs.stylix.nixosModules.stylix
-  ];
-
-      magos.core.stylix.enable = lib.mkDefault true;
-};
-
-  flake.homeManagerModules.stylix = {config, lib, pkgs, ... }: {
+  # NixOS bundle
+  flake.nixosModules.stylix = { ... }: {
     imports = [
-      inputs.stylix.homeModules.stylix     # NOTE: homeModules per Stylix docs
-      #self.homeModules.stylix
+      inputs.stylix.nixosModules.stylix
+      self.nixosModules.core.stylix
     ];
+    magos.core.stylix.enable = lib.mkDefault true;  # optional opinion
+  };
 
-    magos.hm.core.stylix.enable = lib.mkDefault true;
+  # Home bundle
+  flake.homeManagerModules.stylix = { ... }: {
+    imports = [
+      inputs.stylix.homeModules.stylix
+      self.homeModules.core.stylix
+    ];
+    # magos.hm.core.stylix.enable = lib.mkDefault true;  # optional
   };
 }
+
