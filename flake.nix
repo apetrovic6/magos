@@ -18,6 +18,12 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    elephant.url = "github:abenz1267/elephant";
+    walker = {
+      url = "github:abenz1267/walker";
+      inputs.elephant.follows = "elephant";
+    };
   };
 
   outputs = inputs@{ flake-parts, import-tree, ... }:
@@ -30,6 +36,7 @@
         #   3. Add here: foo.flakeModule
         (import-tree ./modules)
         inputs.home-manager.flakeModules.home-manager
+
       ];
       systems = [ "x86_64-linux" "aarch64-linux" ];
 
