@@ -10,8 +10,12 @@
 
 flake.homeManagerModules.default = {config, lib, pkgs, ... }:
   {
-      imports = [ self.homeModules.ghostty ];
+      imports = [
+        self.homeModules.ghostty 
+        self.homeModules.starship
+      ];
 
       magos.hm.ghostty.enable = lib.mkDefault true;
+      magos.hm.starship.enable = lib.mkDefault true;
   };
 }
