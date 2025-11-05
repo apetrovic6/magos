@@ -18,6 +18,11 @@
       url = "github:abenz1267/walker";
       inputs.elephant.follows = "elephant";
     };
+
+    stylix = {
+     url = "github:nix-community/stylix";
+     inputs.nixpkgs.follows = "nixpkgs";
+     };
   };
 
   outputs = inputs@{ flake-parts, import-tree, ... }:
