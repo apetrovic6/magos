@@ -1,5 +1,5 @@
 { inputs, ... }:{
-flake.homeModules.ghostty = {config, lib, pkgs, ... }:
+flake.homeModules.wezterm = {config, lib, pkgs, ... }:
 let
   cfg = config.magos.hm.wezterm;
 in
