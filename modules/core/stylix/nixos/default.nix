@@ -35,25 +35,25 @@
         polarity = cfg.polarity;
 
 
-opacity = {
-      terminal = 0.8;
-      desktop = 0.5;
-      popups = 0.5;
-      applications = 0.5;
-    };
+          opacity = {
+            terminal = 0.8;
+            desktop = 0.5;
+            popups = 0.5;
+            applications = 0.5;
+          };
 
-    fonts = {
-      monospace = {
-        package = pkgs.nerd-fonts.jetbrains-mono;
-        name = "jetbrains-mono";
-      };
+          fonts = {
+            monospace = {
+              package = pkgs.nerd-fonts.jetbrains-mono;
+              name = "jetbrains-mono";
+            };
 
-      sizes = {
-        applications = 10;
-        terminal = 10;
-        desktop = 10;
-        popups = 10;
-      };
+            sizes = {
+              applications = 10;
+              terminal = 10;
+              desktop = 10;
+              popups = 10;
+            };
           };
 
 
