@@ -11,6 +11,7 @@
   }: {
     imports = [
       self.nixosModules.stylix
+      self.nixosModules.hyprland
       # add more modules here later (networking, hyprland, etc.)
     ];
 
@@ -29,7 +30,6 @@
     inherit (lib) mkDefault;
   in {
     imports = [
-
       self.homeModules.ghostty
       self.homeModules.starship
 
@@ -39,6 +39,7 @@
       self.homeManagerModules.stylix
       self.homeManagerModules.hypridle
       self.homeManagerModules.hyprpanel
+      self.homeManagerModules.hyprland
     ];
 
     nix.settings = {
@@ -46,6 +47,7 @@
       extra-trusted-public-keys = ["walker.cachix.org-1:fG8q+uAaMqhsMxWjwvk0IMb4mFPFLqHjuvfwQxE4oJM=" "walker-git.cachix.org-1:vmC0ocfPWh0S/vRAQGtChuiZBTAe4wiKDeyyXM0/7pM="];
     };
 
+    magos.hm.core.hyprland.enable = mkDefault true;
     magos.hm.core.hyprpanel.enable = mkDefault true;
     magos.hm.core.hypridle.enable = mkDefault true;
     magos.hm.core.ghostty.enable = mkDefault true;

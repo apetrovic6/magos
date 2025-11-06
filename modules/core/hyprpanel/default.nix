@@ -55,7 +55,6 @@
         description = "Enable bar button borders.";
       };
 
-
       weather.enable = lib.mkOption {
         type = lib.types.bool;
         default = false;
@@ -63,7 +62,7 @@
       };
 
       weather.unit = lib.mkOption {
-        type = lib.types.enum [ "metric" "imperial" ];
+        type = lib.types.enum ["metric" "imperial"];
         default = "metric";
         description = "Weather units";
       };
@@ -119,7 +118,6 @@
               unit = cfg.weather.unit;
               enabled = cfg.weather.enable;
             };
-
           };
           menus.dashboard.directories.enabled = false;
           menus.dashboard.stats.enable_gpu = false;

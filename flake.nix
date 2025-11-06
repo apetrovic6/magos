@@ -8,6 +8,8 @@
 
     import-tree.url = "github:vic/import-tree";
 
+    hyprland.url = "github:hyprwm/Hyprland";
+
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
