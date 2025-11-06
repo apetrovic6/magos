@@ -121,6 +121,8 @@
           hyprpanel
           # wf-recorder
           # grimblast
+          playerctl
+          wireplumber
           wl-clipboard
           xdg-desktop-portal-hyprland
           qt5.qtwayland

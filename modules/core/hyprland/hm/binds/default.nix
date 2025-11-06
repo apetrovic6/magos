@@ -1,9 +1,10 @@
-{...}:
-{
-  imports = [
-    ./tiling.nix
-    ./bindings.nix
-    ./media.nix
-    ./utils.nix
-  ];
+{self, ...}: {
+  flake.homeModules.hyprland-binds = {
+    config,
+    lib,
+    ...
+  }: {
+    imports = [
+    ];
+  };
 }

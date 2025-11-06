@@ -1,9 +1,14 @@
-{...}:
-{
-  wayland.windowManager.hyprland.settings = {
-    exec-once = [
-      "systemctl --user start hyprpolkitagent"
-      "walker --gapplication-service &"
-    ];
+{...}: {
+  flake.homeModules.hyprland-exec = {
+    config,
+    lib,
+    ...
+  }: {
+    wayland.windowManager.hyprland.settings = {
+      exec-once = [
+        "systemctl --user start hyprpolkitagent"
+        "walker --gapplication-service &"
+      ];
+    };
   };
 }
