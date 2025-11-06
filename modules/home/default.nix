@@ -3,9 +3,14 @@
 
 flake.nixosModules.default = {config, lib, pkgs, ...}:
   {
-      imports = [
-        self.nixosModules.stylix
-      ];
+imports = [
+      self.nixosModules.stylix
+      # add more modules here later (networking, hyprland, etc.)
+    ];
+
+    # Optional soft defaults (easy to override without mkForce)
+    magos.stylix.enable = lib.mkDefault true;
+    # magos.stylix.polarity = lib.mkDefault "dark";
       environment.systemPackages = with pkgs; [
         wezterm
       ];
@@ -17,13 +22,17 @@ flake.homeManagerModules.default = {config, lib, pkgs, ... }:
     in
   {
       imports = [
-        inputs.walker.homeManagerModules.default
+        # self.homeManagerModules.palette
 
+        inputs.walker.homeManagerModules.default
         self.homeModules.ghostty 
         self.homeModules.starship
-        self.homeModules.walker
 
-        self.homeManagerModules.stylix
+
+        self.homeManagerModules.walker
+        self.homeManagerModules.hyprlock
+
+      self.homeManagerModules.stylix
       ];
 
         nix.settings = {
@@ -33,6 +42,7 @@ flake.homeManagerModules.default = {config, lib, pkgs, ... }:
 
       magos.hm.core.ghostty.enable = mkDefault true;
       magos.hm.core.starship.enable = mkDefault true;
+      magos.hm.stylix.enable = lib.mkDefault true;
       magos.hm.core.walker.enable = mkDefault true;
   };
 }

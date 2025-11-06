@@ -1,55 +1,56 @@
-{ inputs, ... }:{
-flake.homeModules.core.stylix = { config, lib, pkgs, ... }:
-let
-  inherit (lib) types mkOption mkEnableOption;
-  cfg = config.magos.hm.core.stylix;
-   c = config.lib.stylix.colors;
-in
+
+{ inputs, ... }:
 {
-options.magos.hm.core.stylix.palette = lib.mkOption {
-    type = lib.types.attrsOf lib.types.str;
-    readOnly = true;
-    default = {
-      backgroundDefault = "#${c.base00}";
-      backgroundAlpha50 = "alpha(#${c.base01}, 0.5)";
-      background        = "#${c.base01}";
-      foreground        = "#${c.base05}";
+  # Export a Home-Manager module
+  flake.homeManagerModules.stylix = { lib, config, pkgs, ... }:
+  let
+    inherit (lib) mkIf mkOption mkEnableOption types optionalAttrs;
+    cfg = config.magos.hm.stylix;
+  in
+  {
+    options.magos.hm.stylix = {
+      enable = mkEnableOption "Enable Stylix for this Home profile";
 
-      textDefault    = "#${c.base05}";
-      textAlternate  = "#${c.base04}";
-      textPopup      = "#${c.base0A}";
+      image = mkOption {
+        type = types.nullOr types.path;
+        default = null;
+        description = "Optional wallpaper path for Stylix.";
+      };
 
-      border = "#${c.base0D}";
+      polarity = mkOption {
+        type = types.enum [ "light" "dark" ];
+        default = "dark";
+        description = "Theme polarity.";
+      };
 
-      warning = "#${c.base0A}";
-      urgent = "#${c.base09}";
-      error = "#${c.base08}";
+        targets.firefox.profileNames = mkOption {
+          type = types.listOf types.str;
+          default = [];
+          description = "List of profile names to apply stylest to. Works with Firefox and it's supported forks.";
+        };
+
+      # opacity.terminal = {
+      #   type = types.float;
+      #   default = 0.5;
+      #   description = "Opacity of the terminal";
+      #   };
     };
-    description = "Hyperium DE palette derived from Stylix.";
-  };
 
+    config = mkIf cfg.enable {
+      stylix = {
+        enable   = true;
+        autoEnable = true;
+        polarity = cfg.polarity;
 
- options.magos.hm.core.stylix = {
-  enable = lib.mkEnableOption "Enable and setup stylix";
-  image  = lib.mkOption { type = lib.types.nullOr lib.types.path; default = null; };
-  polarity = lib.mkOption { type = lib.types.enum [ "light" "dark" ]; default = "dark"; };
-};
-
-config = lib.mkIf cfg.enable {
-  stylix = {
-    enable = true;
-    autoEnable = true;
-    polarity = cfg.polarity;
-  } // lib.optionalAttrs (cfg.image != null) { image = cfg.image; };
-
-    opacity = {
+       opacity = {
       terminal = 0.8;
       desktop = 0.5;
       popups = 0.5;
       applications = 0.5;
     };
 
-    fonts = {
+
+      fonts = {
       monospace = {
         package = pkgs.nerd-fonts.jetbrains-mono;
         name = "jetbrains-mono";
@@ -63,7 +64,7 @@ config = lib.mkIf cfg.enable {
       };
     };
 
-    targets = {
+targets = {
       hyprpanel.enable = true;
 
       gtk = {
@@ -110,13 +111,13 @@ config = lib.mkIf cfg.enable {
       firefox = {
         enable = true;
         colorTheme.enable = true;
-        profileNames = [ "apetrovic" ];
+        profileNames = cfg.targets.firefox.profileNames;
       };
 
       librewolf = {
         enable = true;
         colorTheme.enable = true;
-        profileNames = [ "apetrovic" ];
+        profileNames = cfg.targets.firefox.profileNames;
       };
 
 
@@ -127,6 +128,10 @@ config = lib.mkIf cfg.enable {
     };
     };
 
+
+
+      } // optionalAttrs (cfg.image != null) { image = cfg.image; };
     };
   };
 }
+

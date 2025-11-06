@@ -13,6 +13,8 @@
 
       config = mkIf cfg.enable {
         programs.hyprlock = {
+          enable = true;
+          settings = {
           general = {
             hide_cursor = true;
             ignore_empty_input = true;
@@ -25,7 +27,7 @@
               valign = "center";
               position = "0, 150";     
               font_size = 64;         # tweak to taste
-              font_family = "Fira Mono";   # or your favorite font
+                #font_family = config.stylix.fonts.monospace;   # or your favorite font
             }
           ];
 
@@ -54,7 +56,7 @@
     }
   ];
 
-
+          };
 
         };
       };

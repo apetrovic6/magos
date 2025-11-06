@@ -1,59 +1,71 @@
-{ inputs, self, ... }:{
-flake.homeModules.walker = {config, lib, pkgs, ... }:
-let
-  inherit (lib) types mkOption mkEnableOption;
-  cfg = config.magos.hm.core.walker;
-in
+
+# modules/core/walker/home.nix
+{ inputs, self, ... }:
 {
-  imports = [
-        self.homeModules.stylix
+  flake.homeManagerModules.walker = { config, lib, pkgs, ... }:
+  let
+    inherit (lib) mkIf mkEnableOption;
+      #  c = config.lib.stylix.colors ;
+  c = config.magos.palette;
+        # backgroundDefault = "#${c.base00}";
+        # backgroundAlpha50 = "alpha(#${c.base01}, 0.5)";
+        # background        = "#${c.base01}";
+        # foreground        = "#${c.base05}";
+        # textDefault       = "#${c.base05}";
+        # textAlternate     = "#${c.base04}";
+        # textPopup         = "#${c.base0A}";
+        # border            = "#${c.base0D}";
+        # warning           = "#${c.base0A}";
+        # urgent            = "#${c.base09}";
+        # error             = "#${c.base08}";
+  in
+  {
+      imports = [
+        ../../theme/palette.nix
       ];
+    options.magos.hm.core.walker.enable = mkEnableOption "Enable and setup Walker";
 
-  options.magos.hm.core.walker = {
-      enable = mkEnableOption "Enable and setup walker";
-  };
+    config = mkIf config.magos.hm.core.walker.enable {
+      programs.walker = {
+        enable = true;
+        runAsService = true;
 
-  config = lib.mkIf cfg.enable {
-  
+        config = {
+          # make sure this matches a key under `themes.*` below
+          theme = "ugala";
 
-        programs.walker = {
-          enable = true;
-          runAsService = true; # Note: this option isn't supported in the NixOS module only in the home-manager module
-
-          # All options from the config.tomltheme.ugala = with config.can be used here https://github.com/abenz1267/walker/blob/master/resources/config.toml
-          config = {
-          theme = "default";
           placeholders = {
-            "default" = { input = "Search"; list = "No Results"; };
-            "files" = { input = "Browse Files"; list = "No Files Found"; };
-            "calc" = { input = "Calculate"; list = "Enter Expression"; };
-            "runner" = { input = "Run Command"; list = "No Commands"; };
-            "websearch" = { input = "Search Web"; list = ""; };
-            "clipboard" = { input = "Clipboard"; list = "Clipboard Empty"; };
-            "symbols" = { input = "Symbol"; list = "No Symbols"; };
-            "todo" = { input = "Todo"; list = "No Todos"; };
+            default   = { input = "Search";         list = "No Results"; };
+            files     = { input = "Browse Files";   list = "No Files Found"; };
+            calc      = { input = "Calculate";      list = "Enter Expression"; };
+            runner    = { input = "Run Command";    list = "No Commands"; };
+            websearch = { input = "Search Web";     list = ""; };
+            clipboard = { input = "Clipboard";      list = "Clipboard Empty"; };
+            symbols   = { input = "Symbol";         list = "No Symbols"; };
+            todo      = { input = "Todo";           list = "No Todos"; };
           };
 
-        providers.prefixes = [
-          {provider = "websearch"; prefix = "@";}
-          {provider = "providerlist"; prefix = ";";}
-          {provider = "clipboard"; prefix = ":";}
-          {provider = "files"; prefix = "/";}
-          {provider = "runner"; prefix = ">";}
-          {provider = "windows"; prefix = "$";}
-          {provider = "symbols"; prefix = ".";}
-          {provider = "todo"; prefix = "!";}
-        ];
-
-      # providers.actions = [];
-
-     keybinds.quick_activate = [];
+          providers.prefixes = [
+            { provider = "websearch";   prefix = "@"; }
+            { provider = "providerlist"; prefix = ";"; }
+            { provider = "clipboard";    prefix = ":"; }
+            { provider = "files";        prefix = "/"; }
+            { provider = "runner";       prefix = ">"; }
+            { provider = "windows";      prefix = "$"; }
+            { provider = "symbols";      prefix = "."; }
+            { provider = "todo";         prefix = "!"; }
+          ];
+          };
 
 
-          themes.ugala = with config.magos.hm.core.stylix.palette ; {
 
-              style = /* css */ ''
-  * {
+
+themes = {
+    "ugala" = with c; {
+      # Check out the default css theme as an example https://github.com/abenz1267/walker/blob/master/resources/themes/default/style.css
+      style = /* css */ 
+                ''
+      * {
   all: unset;
 }
 
@@ -217,147 +229,84 @@ child:selected .item-box {
 
 .keybind-label {
 }   
-'';
-            };      
 
-layouts = {
+                '';
 
-"layout" = ''
-
-<?xml version="1.0" encoding="UTF-8"?>
-<interface>
-  <requires lib="gtk" version="4.0"></requires>
-  <object class="GtkWindow" id="Window">
-    <style>
-      <class name="window"></class>
-    </style>
-    <property name="resizable">true</property>
-    <property name="title">Walker</property>
-    <child>
-      <object class="GtkBox" id="BoxWrapper">
-        <style>
-          <class name="box-wrapper"></class>
-        </style>
-        <property name="width-request">644</property>
-        <property name="overflow">hidden</property>
-        <property name="orientation">horizontal</property>
-        <property name="valign">center</property>
-        <property name="halign">center</property>
-        <child>
-          <object class="GtkBox" id="Box">
-            <style>
-              <class name="box"></class>
-            </style>
-            <property name="orientation">vertical</property>
-            <property name="hexpand-set">true</property>
-            <property name="hexpand">true</property>
-            <property name="spacing">10</property>
-            <child>
-              <object class="GtkBox" id="SearchContainer">
-                <style>
-                  <class name="search-container"></class>
-                </style>
-                <property name="overflow">hidden</property>
-                <property name="orientation">horizontal</property>
-                <property name="halign">fill</property>
-                <property name="hexpand-set">true</property>
-                <property name="hexpand">true</property>
+      # Check out the default layouts for examples https://github.com/abenz1267/walker/tree/master/resources/themes/default
+      layouts = {
+        "layout" = ''
+   <?xml version="1.0" encoding="UTF-8"?>
+            <interface>
+              <requires lib="gtk" version="4.0"></requires>
+              <object class="GtkWindow" id="Window">
+                <style><class name="window"/></style>
+                <property name="resizable">true</property>
+                <property name="title">Walker</property>
                 <child>
-                  <object class="GtkEntry" id="Input">
-                    <style>
-                      <class name="input"></class>
-                    </style>
-                    <property name="halign">fill</property>
-                    <property name="hexpand-set">true</property>
-                    <property name="hexpand">true</property>
-                  </object>
-                </child>
-              </object>
-            </child>
-            <child>
-              <object class="GtkBox" id="ContentContainer">
-                <style>
-                  <class name="content-container"></class>
-                </style>
-                <property name="orientation">horizontal</property>
-                <property name="spacing">10</property>
-                <property name="vexpand">true</property>
-                <property name="vexpand-set">true</property>
-                <child>
-                  <object class="GtkLabel" id="ElephantHint">
-                    <style>
-                      <class name="elephant-hint"></class>
-                    </style>
-                    <property name="hexpand">true</property>
-                    <property name="height-request">100</property>
-                    <property name="label">Waiting for elephant...</property>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="Placeholder">
-                    <style>
-                      <class name="placeholder"></class>
-                    </style>
-                    <property name="label">No Results</property>
-                    <property name="yalign">0.0</property>
-                    <property name="hexpand">true</property>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkScrolledWindow" id="Scroll">
-                    <style>
-                      <class name="scroll"></class>
-                    </style>
-                    <property name="hexpand">true</property>
-                    <property name="can_focus">false</property>
-                    <property name="overlay-scrolling">true</property>
-                    <property name="max-content-width">600</property>
-                    <property name="max-content-height">300</property>
-                    <property name="min-content-height">0</property>
-                    <property name="propagate-natural-height">true</property>
-                    <property name="propagate-natural-width">true</property>
-                    <property name="hscrollbar-policy">automatic</property>
-                    <property name="vscrollbar-policy">automatic</property>
+                  <object class="GtkBox" id="BoxWrapper">
+                    <style><class name="box-wrapper"/></style>
+                    <property name="width-request">644</property>
+                    <property name="overflow">hidden</property>
+                    <property name="orientation">horizontal</property>
+                    <property name="valign">center</property>
+                    <property name="halign">center</property>
                     <child>
-                      <object class="GtkGridView" id="List">
-                        <style>
-                          <class name="list"></class>
-                        </style>
-                        <property name="max_columns">1</property>
-                        <property name="can_focus">false</property>
+                      <object class="GtkBox" id="Box">
+                        <style><class name="box"/></style>
+                        <property name="orientation">vertical</property>
+                        <property name="hexpand">true</property>
+                        <property name="spacing">10</property>
+                        <child>
+                          <object class="GtkBox" id="SearchContainer">
+                            <style><class name="search-container"/></style>
+                            <property name="overflow">hidden</property>
+                            <property name="orientation">horizontal</property>
+                            <property name="hexpand">true</property>
+                            <child><object class="GtkEntry" id="Input"><style><class name="input"/></style>
+                              <property name="hexpand">true</property></object></child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkBox" id="ContentContainer">
+                            <style><class name="content-container"/></style>
+                            <property name="orientation">horizontal</property>
+                            <property name="spacing">10</property>
+                            <property name="vexpand">true</property>
+                            <child><object class="GtkLabel" id="ElephantHint"><style><class name="elephant-hint"/></style>
+                              <property name="hexpand">true</property><property name="height-request">100</property>
+                              <property name="label">Waiting for elephant...</property></object></child>
+                            <child><object class="GtkLabel" id="Placeholder"><style><class name="placeholder"/></style>
+                              <property name="label">No Results</property><property name="yalign">0.0</property>
+                              <property name="hexpand">true</property></object></child>
+                            <child><object class="GtkScrolledWindow" id="Scroll"><style><class name="scroll"/></style>
+                              <property name="hexpand">true</property><property name="overlay-scrolling">true</property>
+                              <property name="max-content-width">600</property><property name="max-content-height">300</property>
+                              <child><object class="GtkGridView" id="List"><style><class name="list"/></style>
+                                <property name="max_columns">1</property></object></child>
+                            </object></child>
+                            <child><object class="GtkBox" id="Preview"><style><class name="preview"/></style></object></child>
+                          </object>
+                        </child>
+                        <child><object class="GtkLabel" id="Error"><style><class name="error"/></style>
+                          <property name="xalign">0</property><property name="visible">false</property></object></child>
                       </object>
                     </child>
                   </object>
                 </child>
-                <child>
-                  <object class="GtkBox" id="Preview">
-                    <style>
-                      <class name="preview"></class>
-                    </style>
-                  </object>
-                </child>
               </object>
-            </child>
-            <child>
-              <object class="GtkLabel" id="Error">
-                <style>
-                  <class name="error"></class>
-                </style>
-                <property name="xalign">0</property>
-               <property name="visible">false</property>
-              </object>
-            </child>
-          </object>
-        </child>
-      </object>
-    </child>
-  </object>
-</interface>
-'';
-            };
+            </interface>
 
-          };
+
+        '';
+      };
     };
+    "other theme name" = {
+        # ...
+    };
+    # more themes
   };
-};
+        };
+      };
+    };
 }
+
