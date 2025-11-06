@@ -1,35 +1,35 @@
-{ inputs, ... }:{
-flake.homeModules.starship = {config, lib, pkgs, ... }:
-let
-  inherit (lib) types mkOption mkEnableOption;
-  cfg = config.magos.hm.core.starship;
-in
-{
-  options.magos.hm.core.starship = {
+{inputs, ...}: {
+  flake.homeModules.starship = {
+    config,
+    lib,
+    pkgs,
+    ...
+  }: let
+    inherit (lib) types mkOption mkEnableOption;
+    cfg = config.magos.hm.core.starship;
+  in {
+    options.magos.hm.core.starship = {
       enable = mkEnableOption "Enable and setup starship";
-  };
+    };
 
+    config = lib.mkIf cfg.enable {
+      programs.starship = {
+        enable = true;
+        settings = {
+          add_newline = true;
+          command_timeout = 200;
+          format = "[$directory$git_branch$git_status]($style)$character";
 
+          character = {
+            error_symbol = "[✗](bold cyan)";
+            success_symbol = "[❯](bold cyan)";
+          };
 
-  config = lib.mkIf cfg.enable {
-        programs.starship = {
-          enable = true;
-          settings = {
-            add_newline = true;
-            command_timeout = 200;
-            format = "[$directory$git_branch$git_status]($style)$character";
-
-            character = {
-              error_symbol = "[✗](bold cyan)";
-              success_symbol = "[❯](bold cyan)";
-            };
-
-            directory = {
+          directory = {
             truncation_length = 2;
             truncation_symbol = "…/";
             repo_root_style = "bold cyan";
-            repo_root_format =
-              "[$repo_root]($repo_root_style)[$path]($style)[$read_only]($read_only_style) ";
+            repo_root_format = "[$repo_root]($repo_root_style)[$path]($style)[$read_only]($read_only_style) ";
           };
 
           git_branch = {
@@ -39,23 +39,23 @@ in
 
           git_status = {
             format = "[$all_status]($style)";
-            style  = "cyan";
+            style = "cyan";
 
             # NOTE: use Nix indented strings ('' ... '') with ''${...} to emit literal ${...}
-            ahead      = ''⇡''${count} '';
-            diverged   = ''⇕⇡''${ahead_count}⇣''${behind_count} '';
-            behind     = ''⇣''${count} '';
+            ahead = ''⇡''${count} '';
+            diverged = ''⇕⇡''${ahead_count}⇣''${behind_count} '';
+            behind = ''⇣''${count} '';
             conflicted = " ";
             up_to_date = " ";
-            untracked  = "? ";
-            modified   = " ";
-            stashed    = "";
-            staged     = "" ;
-            renamed    = "";
-            deleted    = "";
+            untracked = "? ";
+            modified = " ";
+            stashed = "";
+            staged = "";
+            renamed = "";
+            deleted = "";
           };
-         };
+        };
       };
+    };
   };
-};
 }

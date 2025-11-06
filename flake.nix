@@ -20,13 +20,19 @@
     };
 
     stylix = {
-     url = "github:nix-community/stylix";
-     inputs.nixpkgs.follows = "nixpkgs";
-     };
+      url = "github:nix-community/stylix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    treefmt-nix.url = "github:numtide/treefmt-nix";
   };
 
-  outputs = inputs@{ flake-parts, import-tree, ... }:
-    flake-parts.lib.mkFlake { inherit inputs; } {
+  outputs = inputs @ {
+    flake-parts,
+    import-tree,
+    ...
+  }:
+    flake-parts.lib.mkFlake {inherit inputs;} {
       imports = [
         # To import an internal flake module: ./other.nix
         # To import an external flake module:
@@ -34,24 +40,37 @@
         #   2. Add foo as a parameter to the outputs function
         #   3. Add here: foo.flakeModule
         (import-tree ./modules)
+        inputs.treefmt-nix.flakeModule
         inputs.home-manager.flakeModules.home-manager
         ./lib/utils/merge-hm-modules.nix
       ];
-      systems = [ "x86_64-linux" "aarch64-linux" ];
+      systems = ["x86_64-linux" "aarch64-linux"];
 
-      perSystem = { config, self', inputs', pkgs, system, ... }: {
+      perSystem = {
+        config,
+        self',
+        inputs',
+        pkgs,
+        system,
+        ...
+      }: {
         # Per-system attributes can be defined here. The self' and inputs'
         # module parameters provide easy access to attributes of the same
         # system.
 
         # Equivalent to  inputs'.nixpkgs.legacyPackages.hello;
         # packages.default = pkgs.hello;
+        treefmt = {
+          projectRootFile = "flake.nix";
+          programs.alejandra.enable = true; # Nix formatter
+          # add more: programs.prettier.enable = true; etc.
+        };
       };
       # flake = {
-        # The usual flake attributes can be defined here, including system-
-        # agnostic ones like nixosModule and system-enumerating ones, although
-        # those are more easily expressed in perSystem.
-        #
+      # The usual flake attributes can be defined here, including system-
+      # agnostic ones like nixosModule and system-enumerating ones, although
+      # those are more easily expressed in perSystem.
+      #
       # };
     };
 }

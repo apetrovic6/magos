@@ -1,17 +1,18 @@
 # modules/stylix/nixos.nix
-{ inputs, ... }:
-{
+{inputs, ...}: {
   # Export a NixOS module at flake.nixosModules.stylix
-  flake.nixosModules.stylix = { lib, config, pkgs, ... }:
-  let
+  flake.nixosModules.stylix = {
+    lib,
+    config,
+    pkgs,
+    ...
+  }: let
     inherit (lib) mkIf mkOption mkEnableOption types optionalAttrs;
     cfg = config.magos.stylix;
-  in
-  {
+  in {
     # Pull in the upstream Stylix NixOS module
-    imports = [ inputs.stylix.nixosModules.stylix ];
+    imports = [inputs.stylix.nixosModules.stylix];
 
-    
     options.magos.stylix = {
       enable = mkEnableOption "Enable Stylix on this system";
 
@@ -23,17 +24,17 @@
       };
 
       polarity = mkOption {
-        type = types.enum [ "light" "dark" ];
+        type = types.enum ["light" "dark"];
         default = "dark";
         description = "Theme polarity.";
       };
     };
 
     config = mkIf cfg.enable {
-      stylix = {
-        enable   = true;
-        polarity = cfg.polarity;
-
+      stylix =
+        {
+          enable = true;
+          polarity = cfg.polarity;
 
           opacity = {
             terminal = 0.8;
@@ -56,20 +57,20 @@
             };
           };
 
-
-        targets.regreet = {
+          targets.regreet = {
             enable = true;
             useWallpaper = true;
           };
 
           cursor = {
-           package = pkgs.adwaita-icon-theme;
+            package = pkgs.adwaita-icon-theme;
             name = "Adwaita";
             size = 24;
           };
-      } // optionalAttrs (cfg.image != null) {
-        image = cfg.image;
-      };
+        }
+        // optionalAttrs (cfg.image != null) {
+          image = cfg.image;
+        };
     };
   };
 }

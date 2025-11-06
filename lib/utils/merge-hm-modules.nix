@@ -5,21 +5,19 @@
   flake-parts-lib,
   moduleLocation,
   ...
-}:
-let
+}: let
   inherit (lib) mapAttrs mkOption types;
   inherit (flake-parts-lib) mkSubmoduleOptions;
-in
-{
+in {
   options = {
     flake = mkSubmoduleOptions {
       homeManagerModules = mkOption {
         type = types.lazyAttrsOf types.unspecified;
-        default = { };
+        default = {};
         apply = mapAttrs (
           k: v: {
             _file = "${toString moduleLocation}#homeManagerModules.${k}";
-            imports = [ v ];
+            imports = [v];
           }
         );
         description = ''
