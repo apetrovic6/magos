@@ -29,9 +29,7 @@
     inherit (lib) mkDefault;
   in {
     imports = [
-      # self.homeManagerModules.palette
 
-      inputs.walker.homeManagerModules.default
       self.homeModules.ghostty
       self.homeModules.starship
 

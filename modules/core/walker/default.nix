@@ -14,6 +14,7 @@
   in {
     imports = [
       ../../theme/palette.nix
+      inputs.walker.homeManagerModules.default
     ];
     options.magos.hm.core.walker.enable = mkEnableOption "Enable and setup Walker";
 
