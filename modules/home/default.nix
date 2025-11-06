@@ -17,9 +17,7 @@
     # Optional soft defaults (easy to override without mkForce)
     magos.stylix.enable = lib.mkDefault true;
     # magos.stylix.polarity = lib.mkDefault "dark";
-    environment.systemPackages = with pkgs; [
-      wezterm
-    ];
+    environment.systemPackages = with pkgs; [];
   };
 
   flake.homeManagerModules.default = {
@@ -42,6 +40,7 @@
 
       self.homeManagerModules.stylix
       self.homeManagerModules.hypridle
+      self.homeManagerModules.hyprpanel
     ];
 
     nix.settings = {
@@ -49,6 +48,8 @@
       extra-trusted-public-keys = ["walker.cachix.org-1:fG8q+uAaMqhsMxWjwvk0IMb4mFPFLqHjuvfwQxE4oJM=" "walker-git.cachix.org-1:vmC0ocfPWh0S/vRAQGtChuiZBTAe4wiKDeyyXM0/7pM="];
     };
 
+    magos.hm.core.hyprpanel.enable = mkDefault true;
+    magos.hm.core.hypridle.enable = mkDefault true;
     magos.hm.core.ghostty.enable = mkDefault true;
     magos.hm.core.starship.enable = mkDefault true;
     magos.hm.stylix.enable = lib.mkDefault true;

@@ -1,4 +1,3 @@
-# modules/core/walker/home.nix
 {
   inputs,
   self,
