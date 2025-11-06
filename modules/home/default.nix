@@ -41,6 +41,7 @@
       self.homeManagerModules.hyprlock
 
       self.homeManagerModules.stylix
+      self.homeManagerModules.hypridle
     ];
 
     nix.settings = {
