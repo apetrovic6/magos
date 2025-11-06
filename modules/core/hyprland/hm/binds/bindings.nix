@@ -1,4 +1,7 @@
-{ pkgs, lib, ... }:
+
+{ ... }:
+{
+flake.homeModules.hyprland-bindings = {config, lib, pkgs, ...}:
 with pkgs;
 let 
   inherit (lib) getExe;
@@ -42,5 +45,5 @@ in
     "${modifier} SHIFT, SPACE, Toggle Hyprpanel, exec, hyprpanel toggleWindow bar-0"
     "${modifier} SHIFT, N, Notifications, exec, hyprpanel t notificationsmenu"
   ];
+};
 }
-
