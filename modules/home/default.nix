@@ -33,18 +33,6 @@
       self.homeModules.ghostty
       self.homeModules.starship
 
-      self.homeManagerModules.hyprland-bindings
-      # self.homeModules.hyprland-media
-      # self.homeModules.hyprland-tiling
-
-      # self.homeModules.hyprland-windows
-      # self.homeModules.hyprland-input
-      self.homeModules.hyprland-monitors
-      # self.homeModules.hyprland-animations
-      self.homeModules.hyprland-exec
-
-      #self.homeModules.hyprland-config
-      # self.homeModules.hyprland-binds
       self.homeManagerModules.hyprland
 
       self.homeManagerModules.walker

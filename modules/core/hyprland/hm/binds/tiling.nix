@@ -5,8 +5,6 @@
     ...
   }: let
     modifier = "SUPER";
-    browser = "brave";
-    terminal = "ghostty";
   in {
     wayland.windowManager.hyprland.settings = {
       bindd = [

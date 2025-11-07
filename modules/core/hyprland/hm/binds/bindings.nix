@@ -1,5 +1,5 @@
 {...}: {
-  flake.homeManagerModules.hyprland-bindings = {
+  flake.homeModules.hyprland-bindings = {
     config,
     lib,
     pkgs,
@@ -23,7 +23,8 @@
     in {
       wayland.windowManager.hyprland.settings.bindd = [
         # Walker
-        "${modifier}, SPACE, Launcher, exec, ${getExe walker}"
+        #"${modifier}, SPACE, Launcher, exec, ${getExe walker}"
+        "${modifier}, SPACE, Launcher, exec, ${launcher}"
 
         "${modifier}, RETURN, Terminal, exec, ghostty"
         "${modifier} SHIFT, F, File manager, exec, ${fileManager}"

@@ -294,7 +294,8 @@
                               <property name="hexpand">false</property>
                               <property name="vexpand">true</property>
                               <!-- optional fixed width:
-                              <property name="width-request">260</property> -->
+                              <property name="width-request">260</property>
+                              <property name="height-request">500</property>
                             </object>
                           </child>
                         </object>

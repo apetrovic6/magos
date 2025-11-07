@@ -4,6 +4,14 @@
     lib,
     ...
   }: {
+    imports = [
+      self.homeModules.hyprland-input
+      self.homeModules.hyprland-animations
+      self.homeModules.hyprland-monitors
+      self.homeModules.hyprland-windows
+      self.homeModules.hyprland-exec
+    ];
+
     wayland.windowManager.hyprland.settings = {
       general = {
         gaps_in = 5;
@@ -26,10 +34,6 @@
         focus_on_activate = true;
         anr_missed_pings = 3;
         new_window_takes_over_fullscreen = 1;
-      };
-
-      cursor = {
-        hide_on_key_press = true;
       };
 
       dwindle = {

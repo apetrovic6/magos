@@ -13,6 +13,11 @@
     cfg = config.magos.hm.core.hyprland;
     hypr = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system};
   in {
+    imports = [
+      self.homeModules.hyprland-config
+      self.homeModules.hyprland-binds
+    ];
+
     options.magos.hm.core.hyprland = {
       enable = mkEnableOption "Enable Hyprland (Home Manager)";
 
@@ -22,14 +27,6 @@
         description = "Enable user systemd integration for Hyprland.";
       };
 
-      # Use Hyprland/portal from inputs.hyprland (recommended).
-      useHyprlandInputFlake = mkOption {
-        type = types.bool;
-        default = true;
-        description = "Use inputs.hyprland.packages.<system>.hyprland as the compositor package.";
-      };
-
-      # Decoration + blur
       rounding = mkOption {
         type = types.ints.unsigned;
         default = 10;
@@ -65,13 +62,6 @@
           type = types.bool;
           default = true;
         };
-      };
-
-      # Walker blur rules
-      enableWalkerBlurRules = mkOption {
-        type = types.bool;
-        default = true;
-        description = "Add layerrule entries to blur the 'walker' layer surface.";
       };
 
       extraLayerrules = mkOption {

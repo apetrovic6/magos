@@ -5,6 +5,9 @@
     ...
   }: {
     imports = [
+      self.homeModules.hyprland-bindings
+      self.homeModules.hyprland-tiling
+      self.homeModules.hyprland-media
     ];
   };
 }

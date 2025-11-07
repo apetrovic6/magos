@@ -67,6 +67,8 @@
             name = "Adwaita";
             size = 24;
           };
+
+          targets.chromium.enable = true;
         }
         // optionalAttrs (cfg.image != null) {
           image = cfg.image;
