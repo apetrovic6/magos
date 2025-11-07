@@ -1,8 +1,4 @@
-{
-  inputs,
-  self,
-  ...
-}: {
+{self, ...}: {
   flake.homeManagerModules.hyprlock = {
     config,
     lib,

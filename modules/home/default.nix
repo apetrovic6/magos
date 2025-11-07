@@ -39,13 +39,13 @@
 
       # self.homeModules.hyprland-windows
       # self.homeModules.hyprland-input
-       self.homeModules.hyprland-monitors
+      self.homeModules.hyprland-monitors
       # self.homeModules.hyprland-animations
-       self.homeModules.hyprland-exec
+      self.homeModules.hyprland-exec
 
-        #self.homeModules.hyprland-config
+      #self.homeModules.hyprland-config
       # self.homeModules.hyprland-binds
-       self.homeManagerModules.hyprland
+      self.homeManagerModules.hyprland
 
       self.homeManagerModules.walker
       self.homeManagerModules.hyprlock
