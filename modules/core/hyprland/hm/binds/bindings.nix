@@ -5,37 +5,33 @@
     pkgs,
     ...
   }:
-    with pkgs; let
+    with pkgs; 
+    let
       inherit (lib) getExe;
       modifier = "SUPER";
 
       launcher = "walker -m desktopapplications";
       browser = getExe librewolf;
-      # terminal = getExe ghostty;
-      terminal = "ghostty";
-      # passwordManager = getExe bitwarden-desktop;
+      terminal = getExe ghostty;
+      passwordManager = getExe bitwarden-desktop;
       fileManager = getExe xfce.thunar;
       cliFileManager = getExe yazi;
-      # messenger = getExe signal-desktop-bin;
-
-      passwordManager = "bitwarden";
-      messenger = "signal";
+      messenger = getExe signal-desktop-bin;
     in {
       wayland.windowManager.hyprland.settings.bindd = [
         # Walker
-        #"${modifier}, SPACE, Launcher, exec, ${getExe walker}"
         "${modifier}, SPACE, Launcher, exec, ${launcher}"
 
-        "${modifier}, RETURN, Terminal, exec, ghostty"
+        "${modifier}, RETURN, Terminal, exec, ${terminal}"
         "${modifier} SHIFT, F, File manager, exec, ${fileManager}"
         "${modifier}, B, Web browser, exec, ${browser}"
 
         # #"${modifier}, M, Music player, exec, ${music}"
-        #
-        # "${modifier}, G, Messenger, exec, ${messenger}"
-        # "${modifier}, O, Obsidian, exec, obsidian -disable-gpu"
-        # "${modifier}, SLASH, Password manager, exec, ${passwordManager}"
-        #
+
+        "${modifier}, Q, Messenger, exec, ${messenger}"
+        "${modifier}, O, Obsidian, exec, ${obsidian} -disable-gpu"
+         "${modifier}, SLASH, Password manager, exec, ${passwordManager}"
+
         # # Terminal apps
         "${modifier}, N, Neovim, exec, ${terminal} -e nvim"
         "${modifier}, D, Lazy Docker, exec, ${terminal} -e lazydocker"
