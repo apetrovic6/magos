@@ -28,7 +28,7 @@
 
         # #"${modifier}, M, Music player, exec, ${music}"
 
-        "${modifier}, Q, Messenger, exec, ${messenger}"
+        "${modifier}, V, Messenger, exec, ${messenger}"
         "${modifier}, O, Obsidian, exec, ${obsidian} -disable-gpu"
          "${modifier}, SLASH, Password manager, exec, ${passwordManager}"
 
