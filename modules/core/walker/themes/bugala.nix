@@ -1,5 +1,6 @@
+
 {...}: {
-  flake.homeModules.walker-ugala = {
+  flake.homeModules.walker-bugala = {
     config,
     lib,
     ...
@@ -10,7 +11,7 @@
       ../../../theme/palette.nix
     ];
 
-    programs.walker.themes.ugala = {
+    programs.walker.themes.bugala = {
       style =
         /*
         css
