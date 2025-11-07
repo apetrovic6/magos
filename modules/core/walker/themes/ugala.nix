@@ -16,7 +16,7 @@
         css
         */
         with c; ''
-        
+
 
           .normal-icons {
             -gtk-icon-size: 16px;
@@ -184,39 +184,34 @@
       # Check out the default layouts for examples https://github.com/abenz1267/walker/tree/master/resources/themes/default
       layouts = {
         "layout" = ''
-          <?xml version="1.0" encoding="UTF-8"?>
+              <?xml version="1.0" encoding="UTF-8"?>
           <interface>
-            <requires lib="gtk" version="4.0"></requires>
+            <requires lib="gtk" version="4.0"/>
             <object class="GtkWindow" id="Window">
-              <style>
-                <class name="window"></class>
-              </style>
+              <style><class name="window"/></style>
               <property name="resizable">true</property>
               <property name="title">Walker</property>
               <child>
                 <object class="GtkBox" id="BoxWrapper">
-                  <style>
-                    <class name="box-wrapper"></class>
-                  </style>
+                  <style><class name="box-wrapper"/></style>
                   <property name="width-request">644</property>
                   <property name="overflow">hidden</property>
                   <property name="orientation">horizontal</property>
                   <property name="valign">center</property>
                   <property name="halign">center</property>
+
                   <child>
                     <object class="GtkBox" id="Box">
-                      <style>
-                        <class name="box"></class>
-                      </style>
+                      <style><class name="box"/></style>
                       <property name="orientation">vertical</property>
                       <property name="hexpand-set">true</property>
                       <property name="hexpand">true</property>
                       <property name="spacing">10</property>
+
+                      <!-- SEARCH ROW -->
                       <child>
                         <object class="GtkBox" id="SearchContainer">
-                          <style>
-                            <class name="search-container"></class>
-                          </style>
+                          <style><class name="search-container"/></style>
                           <property name="overflow">hidden</property>
                           <property name="orientation">horizontal</property>
                           <property name="halign">fill</property>
@@ -224,9 +219,7 @@
                           <property name="hexpand">true</property>
                           <child>
                             <object class="GtkEntry" id="Input">
-                              <style>
-                                <class name="input"></class>
-                              </style>
+                              <style><class name="input"/></style>
                               <property name="halign">fill</property>
                               <property name="hexpand-set">true</property>
                               <property name="hexpand">true</property>
@@ -234,81 +227,90 @@
                           </child>
                         </object>
                       </child>
+
+                      <!-- CONTENT ROW -->
                       <child>
                         <object class="GtkBox" id="ContentContainer">
-                          <style>
-                            <class name="content-container"></class>
-                          </style>
+                          <style><class name="content-container"/></style>
                           <property name="orientation">horizontal</property>
                           <property name="spacing">10</property>
                           <property name="vexpand">true</property>
                           <property name="vexpand-set">true</property>
+
+                          <!-- LEFT: LIST (with overlays for hint/placeholder) -->
                           <child>
-                            <object class="GtkLabel" id="ElephantHint">
-                              <style>
-                                <class name="elephant-hint"></class>
-                              </style>
+                            <object class="GtkOverlay" id="Overlay">
                               <property name="hexpand">true</property>
-                              <property name="height-request">100</property>
-                              <property name="label">Waiting for elephant...</property>
-                            </object>
-                          </child>
-                          <child>
-                            <object class="GtkLabel" id="Placeholder">
-                              <style>
-                                <class name="placeholder"></class>
-                              </style>
-                              <property name="label">No Results</property>
-                              <property name="yalign">0.0</property>
-                              <property name="hexpand">true</property>
-                            </object>
-                          </child>
-                          <child>
-                            <object class="GtkScrolledWindow" id="Scroll">
-                              <style>
-                                <class name="scroll"></class>
-                              </style>
-                              <property name="hexpand">true</property>
-                              <property name="can_focus">false</property>
-                              <property name="overlay-scrolling">true</property>
-                              <property name="max-content-width">600</property>
-                              <property name="max-content-height">300</property>
-                              <property name="min-content-height">0</property>
-                              <property name="propagate-natural-height">true</property>
-                              <property name="propagate-natural-width">true</property>
-                              <property name="hscrollbar-policy">automatic</property>
-                              <property name="vscrollbar-policy">automatic</property>
+                              <property name="vexpand">true</property>
+
                               <child>
-                                <object class="GtkGridView" id="List">
-                                  <style>
-                                    <class name="list"></class>
-                                  </style>
-                                  <property name="max_columns">1</property>
-                                  <property name="can_focus">false</property>
+                                <object class="GtkScrolledWindow" id="Scroll">
+                                  <style><class name="scroll"/></style>
+                                  <property name="hexpand">true</property>
+                                  <property name="vexpand">true</property>
+                                  <property name="can-focus">false</property>
+                                  <property name="overlay-scrolling">true</property>
+                                  <!-- Let it grow; don't cap max-content-* -->
+                                  <property name="propagate-natural-height">true</property>
+                                  <property name="propagate-natural-width">true</property>
+                                  <property name="hscrollbar-policy">automatic</property>
+                                  <property name="vscrollbar-policy">automatic</property>
+                                  <child>
+                                    <object class="GtkGridView" id="List">
+                                      <style><class name="list"/></style>
+                                      <property name="max-columns">1</property>
+                                      <property name="can-focus">false</property>
+                                      <property name="hexpand">true</property>
+                                      <property name="vexpand">true</property>
+                                    </object>
+                                  </child>
+                                </object>
+                              </child>
+
+                              <child type="overlay">
+                                <object class="GtkLabel" id="ElephantHint">
+                                  <style><class name="elephant-hint"/></style>
+                                  <property name="halign">center</property>
+                                  <property name="valign">center</property>
+                                  <property name="label">Waiting for elephant...</property>
+                                </object>
+                              </child>
+
+                              <child type="overlay">
+                                <object class="GtkLabel" id="Placeholder">
+                                  <style><class name="placeholder"/></style>
+                                  <property name="halign">center</property>
+                                  <property name="valign">center</property>
+                                  <property name="label">No Results</property>
                                 </object>
                               </child>
                             </object>
                           </child>
+
+                          <!-- RIGHT: PREVIEW COLUMN -->
                           <child>
                             <object class="GtkBox" id="Preview">
-                              <style>
-                                <class name="preview"></class>
-                              </style>
+                              <style><class name="preview"/></style>
+                              <property name="hexpand">false</property>
+                              <property name="vexpand">true</property>
+                              <!-- optional fixed width:
+                              <property name="width-request">260</property> -->
                             </object>
                           </child>
                         </object>
                       </child>
+
+                      <!-- ERROR ROW -->
                       <child>
                         <object class="GtkLabel" id="Error">
-                          <style>
-                            <class name="error"></class>
-                          </style>
+                          <style><class name="error"/></style>
                           <property name="xalign">0</property>
-                         <property name="visible">false</property>
+                          <property name="visible">false</property>
                         </object>
                       </child>
                     </object>
                   </child>
+
                 </object>
               </child>
             </object>
