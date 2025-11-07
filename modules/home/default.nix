@@ -41,7 +41,7 @@
       # self.homeModules.hyprland-input
        self.homeModules.hyprland-monitors
       # self.homeModules.hyprland-animations
-      # self.homeModules.hyprland-exec
+       self.homeModules.hyprland-exec
 
         #self.homeModules.hyprland-config
       # self.homeModules.hyprland-binds
