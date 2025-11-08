@@ -1,7 +1,5 @@
-# Flake module that declares flake.homeManagerModules outputs and how to merge it
 {
   lib,
-  # , self
   flake-parts-lib,
   moduleLocation,
   ...
