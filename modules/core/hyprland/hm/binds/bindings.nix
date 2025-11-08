@@ -5,8 +5,7 @@
     pkgs,
     ...
   }:
-    with pkgs; 
-    let
+    with pkgs; let
       inherit (lib) getExe;
       modifier = "SUPER";
 
@@ -30,7 +29,7 @@
 
         "${modifier}, V, Messenger, exec, ${messenger}"
         "${modifier}, O, Obsidian, exec, ${obsidian} -disable-gpu"
-         "${modifier}, SLASH, Password manager, exec, ${passwordManager}"
+        "${modifier}, SLASH, Password manager, exec, ${passwordManager}"
 
         # # Terminal apps
         "${modifier}, N, Neovim, exec, ${terminal} -e nvim"

@@ -1,6 +1,6 @@
 {inputs, ...}: {
   # Export a Home-Manager module
-  flake.homeManagerModules.stylix = {
+  flake.homeModules.stylix = {
     lib,
     config,
     pkgs,

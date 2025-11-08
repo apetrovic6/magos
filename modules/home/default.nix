@@ -1,7 +1,4 @@
-{
-  self,
-  ...
-}: {
+{self, ...}: {
   flake.nixosModules.default = {
     config,
     lib,
@@ -9,13 +6,12 @@
     ...
   }: {
     imports = [
-      self.nixosModules.stylix
       self.nixosModules.hyprland
+      self.nixosModules.feature-stylix
       # add more modules here later (networking, hyprland, etc.)
     ];
 
     # Optional soft defaults (easy to override without mkForce)
-    magos.stylix.enable = lib.mkDefault true;
     # magos.stylix.polarity = lib.mkDefault "dark";
     environment.systemPackages = with pkgs; [];
   };
@@ -37,11 +33,10 @@
       self.homeManagerModules.walker
       self.homeManagerModules.hyprlock
 
-      self.homeManagerModules.stylix
+      self.homeModules.features-stylix
       self.homeManagerModules.hypridle
       self.homeManagerModules.hyprpanel
     ];
-
 
     magos.hm.core.hyprland.enable = mkDefault true;
     magos.hm.core.hyprpanel.enable = mkDefault true;
