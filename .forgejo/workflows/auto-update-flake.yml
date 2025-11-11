@@ -15,14 +15,15 @@ jobs:
     # Use the label of your runner (the quick start examples use "docker")
     runs-on: docker # <- adjust if your runner label is different
     container:
-      image: ubuntu:latest
+      image: alpine:latest
     permissions:
       contents: write # allow pushing back to the repo
 
     steps:
       - name: Install node
         run: |
-          apt install node
+          apk add --no-cache nodejs npm git bash openssh-client ca-certificates
+
       - name: Install Nix
         uses: https://github.com/DeterminateSystems/nix-installer-action@v14
 
