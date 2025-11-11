@@ -15,7 +15,7 @@ jobs:
     # Use the label of your runner (the quick start examples use "docker")
     runs-on: docker # <- adjust if your runner label is different
     container:
-      image: ubuntu-latest
+      image: ubuntu:latest
     permissions:
       contents: write # allow pushing back to the repo
 
