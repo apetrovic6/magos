@@ -24,8 +24,8 @@ jobs:
         run: |
           apk add --no-cache nodejs npm git bash openssh-client ca-certificates nix
 
-      - name: Enable fast caches (optional but nice)
-        uses: https://github.com/DeterminateSystems/magic-nix-cache-action@v8
+      # - name: Enable fast caches (optional but nice)
+      #   uses: https://github.com/DeterminateSystems/magic-nix-cache-action@v8
 
       - name: Checkout
         # Prefer fully qualified URLs for actions on Forgejo
