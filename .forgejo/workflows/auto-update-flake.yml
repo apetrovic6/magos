@@ -2,47 +2,60 @@ name: Auto-update flake
 
 on:
   schedule:
+    # Every Monday at 04:15 UTC (which is 05:15 CET for you in winter)
     - cron: "15 4 * * 1"
   workflow_dispatch: {}
 
+concurrency:
+  group: auto-update-flake
+  cancel-in-progress: true
+
 jobs:
   update:
-    runs-on: docker # your runner label
+    # Use the label of your runner (the quick start examples use "docker")
+    runs-on: docker # <- adjust if your runner label is different
     container:
-      image: nixos/nix:2.24.10 # Nix preinstalled
-    steps:
-      # Install Node for JS-based actions (e.g., checkout)
-      - name: Install Node via Nix
-        run: |
-          set -euo pipefail
-          nix --version
-          nix profile install nixpkgs#nodejs_22
-          echo "/root/.nix-profile/bin" >> "$GITHUB_PATH"   # make node visible to later steps
-          node --version
-          npm --version
+      image: ubuntu-latest
+    permissions:
+      contents: write # allow pushing back to the repo
 
+    steps:
       - name: Checkout
+        # Prefer fully qualified URLs for actions on Forgejo
         uses: https://data.forgejo.org/actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # (optional) now JS actions will work since Node is on PATH
-      # - uses: https://github.com/DeterminateSystems/nix-installer-action@v14
+      - name: Install Nix
+        uses: https://github.com/DeterminateSystems/nix-installer-action@v14
 
-      - name: Update flake & check
+      - name: Enable fast caches (optional but nice)
+        uses: https://github.com/DeterminateSystems/magic-nix-cache-action@v8
+
+      - name: Update flake.lock
+        id: update
         env:
           NIX_CONFIG: experimental-features = nix-command flakes
         run: |
+          set -eu
           nix flake update
-          git diff --quiet --exit-code flake.lock || nix flake check --show-trace --print-build-logs
+          if git diff --quiet --exit-code flake.lock; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: nix flake check
+        if: steps.update.outputs.changed == 'true'
+        env:
+          NIX_CONFIG: experimental-features = nix-command flakes
+        run: nix flake check --show-trace --print-build-logs
 
       - name: Commit & push lockfile
-        if: success() && !cancelled() && !failure()
+        if: steps.update.outputs.changed == 'true'
         run: |
-          if ! git diff --quiet --exit-code flake.lock; then
-            git config user.name "Forgejo Actions"
-            git config user.email "ci@local"
-            git add flake.lock
-            git commit -m "chore(flake): update inputs [skip ci]"
-            git push
-          fi
+          git config user.name  "Forgejo Actions"
+          git config user.email "ci@local"
+          git add flake.lock
+          git commit -m "chore(flake): update inputs [skip ci]"
+          git push
