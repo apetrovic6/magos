@@ -62,6 +62,10 @@
             useWallpaper = true;
           };
 
+          targets.nvf = {
+            enable = true;
+          };
+
           cursor = {
             package = pkgs.adwaita-icon-theme;
             name = "Adwaita";

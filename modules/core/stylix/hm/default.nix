@@ -122,6 +122,9 @@
             nvf = {
               enable = true;
             };
+            neovim = {
+              enable = true;
+            };
 
             hyprland = {
               enable = true;
