@@ -20,17 +20,21 @@ jobs:
       contents: write # allow pushing back to the repo
 
     steps:
-      - name: Checkout
-        # Prefer fully qualified URLs for actions on Forgejo
-        uses: https://data.forgejo.org/actions/checkout@v4
-        with:
-          fetch-depth: 0
-
       - name: Install Nix
         uses: https://github.com/DeterminateSystems/nix-installer-action@v14
 
       - name: Enable fast caches (optional but nice)
         uses: https://github.com/DeterminateSystems/magic-nix-cache-action@v8
+
+      - name: Install node via nix shell
+        run: |
+          nix-shell -p node
+
+      - name: Checkout
+        # Prefer fully qualified URLs for actions on Forgejo
+        uses: https://data.forgejo.org/actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Update flake.lock
         id: update
