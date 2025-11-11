@@ -22,10 +22,7 @@ jobs:
     steps:
       - name: Install node
         run: |
-          apk add --no-cache nodejs npm git bash openssh-client ca-certificates
-
-      - name: Install Nix
-        uses: https://github.com/DeterminateSystems/nix-installer-action@v14
+          apk add --no-cache nodejs npm git bash openssh-client ca-certificates nix
 
       - name: Enable fast caches (optional but nice)
         uses: https://github.com/DeterminateSystems/magic-nix-cache-action@v8
