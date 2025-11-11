@@ -22,7 +22,7 @@ jobs:
     steps:
       - name: Install node
         run: |
-          apt install nodejs
+          apt install node
       - name: Install Nix
         uses: https://github.com/DeterminateSystems/nix-installer-action@v14
 
