@@ -1,5 +1,5 @@
 {self, ...}: {
-  flake.homeManagerModules.hyprlock = {
+  flake.homeModules.features-hyprlock = {
     config,
     lib,
     pkgs,

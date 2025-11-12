@@ -31,16 +31,15 @@
       self.homeManagerModules.hyprland
 
       self.homeManagerModules.walker
-      self.homeManagerModules.hyprlock
 
-      self.homeModules.features-stylix
+      self.homeModules.features-hyprlock
       self.homeModules.features-hypridle
+      self.homeModules.features-stylix
       self.homeManagerModules.hyprpanel
     ];
 
     magos.hm.core.hyprland.enable = mkDefault true;
     magos.hm.core.hyprpanel.enable = mkDefault true;
-    magos.hm.core.hypridle.enable = mkDefault true;
     magos.hm.core.ghostty.enable = mkDefault true;
     magos.hm.core.starship.enable = mkDefault true;
     magos.hm.stylix.enable = lib.mkDefault true;
