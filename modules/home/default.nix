@@ -30,7 +30,7 @@
 
       self.homeManagerModules.hyprland
 
-      self.homeManagerModules.walker
+      self.homeModules.features-walker
 
       self.homeModules.features-hyprlock
       self.homeModules.features-hypridle
@@ -43,6 +43,5 @@
     magos.hm.core.ghostty.enable = mkDefault true;
     magos.hm.core.starship.enable = mkDefault true;
     magos.hm.stylix.enable = lib.mkDefault true;
-    magos.hm.core.walker.enable = mkDefault true;
   };
 }
