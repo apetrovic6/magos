@@ -34,7 +34,7 @@
       self.homeManagerModules.hyprlock
 
       self.homeModules.features-stylix
-      self.homeManagerModules.hypridle
+      self.homeModules.features-hypridle
       self.homeManagerModules.hyprpanel
     ];
 
