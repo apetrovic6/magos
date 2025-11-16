@@ -3,7 +3,7 @@ name: Auto-update flake
 on:
   schedule:
     # Every Monday at 04:15 UTC (which is 05:15 CET for you in winter)
-    - cron: "15 4 * * 1"
+    - cron: "0 2 */3 * *"
   workflow_dispatch: {}
 
 concurrency:
@@ -58,7 +58,7 @@ jobs:
           git config user.name  "Forgejo Actions"
           git config user.email "ci@local"
           git add flake.lock
-          git commit -m "chore(flake): update inputs [skip ci]"
+          git commit -m "chore(flake): update inputs"
           git push
           
 
