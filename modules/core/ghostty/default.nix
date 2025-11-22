@@ -18,7 +18,7 @@
       };
 
       enableZshIntegration = mkOption {
-        type = types.boolean;
+        type = types.bool;
         default = config.magos.shell.zsh.enable or false;
         description = "Enable Ghostty Zsh integration";
       };
