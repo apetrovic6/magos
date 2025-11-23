@@ -48,7 +48,7 @@
         };
         applications = lib.mkOption {
           type = lib.types.float;
-          default = 0.3;
+          default = 0.8;
           description = "Opacity of applications (0.0–1.0).";
         };
       };
@@ -100,6 +100,8 @@
           targets = {
             hyprpanel.enable = true;
             ghostty.enable = true;
+
+            helix.enable = true;
 
             gtk = {
               enable = true;
