@@ -26,7 +26,6 @@
   in {
     imports = [
       self.homeModules.ghostty
-      self.homeModules.starship
 
       self.homeManagerModules.hyprland
 
@@ -41,7 +40,6 @@
     magos.hm.core.hyprland.enable = mkDefault true;
     magos.hm.core.hyprpanel.enable = mkDefault true;
     magos.hm.core.ghostty.enable = mkDefault true;
-    magos.hm.core.starship.enable = mkDefault true;
     magos.hm.stylix.enable = lib.mkDefault true;
   };
 }
