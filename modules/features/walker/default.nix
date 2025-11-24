@@ -1,5 +1,5 @@
 {self, ...}: {
-  flake.homeModules.features-walker= {
+  flake.homeModules.features-walker = {
     config,
     lib,
     pkgs,

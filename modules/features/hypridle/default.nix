@@ -1,4 +1,4 @@
-  {self, ...}: {
+{self, ...}: {
   flake.homeModules.features-hypridle = {
     config,
     lib,
