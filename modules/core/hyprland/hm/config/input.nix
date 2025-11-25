@@ -5,8 +5,9 @@
     ...
   }: let
     inherit (lib) mkOption types;
+    cfg = config.magos.hyprland.hm.input;
   in {
-    options.magos.hyprland.input = {
+    options.magos.hyprland.hm.input = {
       kbLayouts = mkOption {
         type = types.listOf types.str;
         default = ["us"];
@@ -31,15 +32,15 @@
     config = {
       wayland.windowManager.hyprland.settings = {
         input = {
-          kb_layout = lib.concatStringsSep "," config.magos.hyprland.input.kbLayouts;
+          kb_layout = lib.concatStringsSep "," cfg.kbLayouts;
 
           kb_variant =
             lib.optionalString
-            (config.magos.hyprland.input.kbVariants != [])
-            (lib.concatStringsSep "," config.magos.hyprland.input.kbVariants);
+            (cfg.kbVariants != [])
+            (lib.concatStringsSep "," cfg.kbVariants);
 
           kb_model = "";
-          kb_options = config.magos.hyprland.input.kbOptions;
+          kb_options = cfg.kbOptions;
           kb_rules = "";
 
           follow_mouse = 1;
