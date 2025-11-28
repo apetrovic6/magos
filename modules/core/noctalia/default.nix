@@ -39,7 +39,7 @@
                 {
                   id = "SidePanelToggle";
                   useDistroLogo = true;
-                  colorizeDistroLogo = false;
+                  colorizeDistroLogo = true;
                 }
 
                 {
