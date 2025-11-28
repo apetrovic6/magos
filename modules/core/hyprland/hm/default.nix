@@ -89,9 +89,9 @@
         settings = {
           # Blur Walker’s layer surface (namespace is “walker”)
           layerrule = [
-            "blur, walker"
-            "blurpopups, walker" # if Walker shows popups/tooltips
-            "ignorealpha 0.5, walker" # reduces halo at fully transparent pixels
+            "blur = walker"
+            "blur_popups =walker" # if Walker shows popups/tooltips
+            "ignore_alpha = 0.5" # reduces halo at fully transparent pixels
           ];
           decoration = {
             rounding = 10;
