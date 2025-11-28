@@ -127,22 +127,26 @@
         };
 
         colors = {
+          mSurface = "#${config.lib.stylix.colors.base00}";
+          mSurfaceVariant = "#${config.lib.stylix.colors.base01}";
+          mOnSurface = "#${config.lib.stylix.colors.base05}";
+          mOnSurfaceVariant = "#${config.lib.stylix.colors.base04}";
+
+          mPrimary = "#${config.lib.stylix.colors.base0D}";
+          mOnPrimary = "#${config.lib.stylix.colors.base00}";
+          mSecondary = "#${config.lib.stylix.colors.base0E}";
+          mOnSecondary = "#${config.lib.stylix.colors.base00}";
+          mTertiary = "#${config.lib.stylix.colors.base0C}";
+          mOnTertiary = "#${config.lib.stylix.colors.base00}";
+
+          mHover = "#${config.lib.stylix.colors.base0B}";
+          mOnHover = "#${config.lib.stylix.colors.base05}";
+
           mError = "#${config.lib.stylix.colors.base08}";
           mOnError = "#${config.lib.stylix.colors.base00}";
-          mOnPrimary = "#${config.lib.stylix.colors.base05}";
-          mOnSecondary = "#${config.lib.stylix.colors.base06}";
-          mOnSurface = "#${config.lib.stylix.colors.base06}";
-          mOnSurfaceVariant = "#${config.lib.stylix.colors.base04}";
-          mOnTertiary = "#${config.lib.stylix.colors.base07}";
-          mOnHover = "#${config.lib.stylix.colors.base05}";
-          mOutline = "#${config.lib.stylix.colors.base04}";
-          mPrimary = "#${config.lib.stylix.colors.base06}";
-          mSecondary = "#${config.lib.stylix.colors.base04}";
+
+          mOutline = "#${config.lib.stylix.colors.base03}";
           mShadow = "#${config.lib.stylix.colors.base00}";
-          mSurface = "#${config.lib.stylix.colors.base00}";
-          mHover = "#${config.lib.stylix.colors.base0B}";
-          mSurfaceVariant = "#${config.lib.stylix.colors.base01}";
-          mTertiary = "#${config.lib.stylix.colors.base07}";
         };
       };
     };
