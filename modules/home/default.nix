@@ -30,6 +30,8 @@
       self.homeManagerModules.hyprland
 
       self.homeModules.features-walker
+      self.homeModules.noctalia
+      self.homeModules.waybar
 
       self.homeModules.features-hyprlock
       self.homeModules.features-hypridle
@@ -37,9 +39,11 @@
       self.homeManagerModules.hyprpanel
     ];
 
+    magos.hm.core.waybar.enable = lib.mkDefault true;
+    magos.hm.hyprlock.enable = lib.mkDefault true;
+    magos.hm.noctalia.enable = mkDefault false;
     magos.hm.core.hyprland.enable = mkDefault true;
-    magos.hm.core.hyprpanel.enable = mkDefault true;
+    magos.hm.core.hyprpanel.enable = mkDefault false;
     magos.hm.core.ghostty.enable = mkDefault true;
-    magos.hm.stylix.enable = lib.mkDefault true;
   };
 }

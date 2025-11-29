@@ -15,6 +15,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    noctalia = {
+      url = "github:noctalia-dev/noctalia-shell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     elephant.url = "github:abenz1267/elephant";
     walker = {
       url = "github:abenz1267/walker";
@@ -67,6 +72,8 @@
           programs.alejandra.enable = true; # Nix formatter
           # add more: programs.prettier.enable = true; etc.
         };
+
+        devShells.default = with pkgs; mkShell {packages = [nil nixd];};
       };
       # flake = {
       # The usual flake attributes can be defined here, including system-
@@ -74,5 +81,6 @@
       # those are more easily expressed in perSystem.
       #
       # };
+      #
     };
 }

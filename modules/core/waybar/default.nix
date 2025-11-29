@@ -26,7 +26,7 @@
           mainBar = {
             layer = "top";
             position = "top";
-            height = 30;
+            height = 20;
             modules-left = ["hyprland/workspaces" "cava"];
             modules-center = ["clock"];
             modules-right = ["pulseaudio" "network" "bluetooth" "battery" "hyprland/language"];
@@ -35,19 +35,10 @@
               on-click = "activate";
               format = "{icon}";
               format-icons = {
-                default = "";
-                "1" = "1";
-                "2" = "2";
-                "3" = "3";
-                "4" = "4";
-                "5" = "5";
-                "6" = "6";
-                "7" = "7";
-                "8" = "8";
-                "9" = "9";
-                active = "󱓻";
+                default = "";
+                persistent = "";
+                active = "";
               };
-
               persistent-workspaces = {
                 "1" = [];
                 "2" = [];
@@ -57,6 +48,10 @@
               };
             };
 
+            "hyprland/language" = {
+              "format" = "{short}";
+            };
+
             clock = {
               format = "{:L%A %H:%M}";
               format-alt = "{:L%d %B W%V %Y}";
@@ -64,7 +59,7 @@
             };
 
             network = {
-              format-icons = ["󰤯" "󰤟" "󰤢" "󰤥" "󰤨"];
+              format-icons = ["󰤯" "󰤟" "󰤢" "󰤢" "󰤥" "󰤨"];
               format = "{icon}";
               format-wifi = "{icon}";
               format-ethernet = "󰀂";
@@ -112,7 +107,7 @@
               on-click-right = "pamixer -t";
               tooltip-format = "Playing at {volume}%";
               scroll-step = 5;
-              format-muted = "";
+              format-muted = " ";
               format-icons = {
                 default = ["" "" ""];
               };
@@ -123,7 +118,7 @@
               framerate = 60;
               autosens = 1;
               sensitivity = 100;
-              bars = 14;
+              bars = 10;
               lower_cutoff_freq = 50;
               higher_cutoff_freq = 10000;
               hide_on_silence = false;
@@ -147,120 +142,124 @@
 
         style = let
           colors = config.lib.stylix.colors;
-        in ''          /* === Stylix Base16 → Material-ish roles ===========================
-              * surface        = base00
-              * surface-alt    = base01
-              * selection      = base02
-              * on-surface     = base05
-              * on-surface-alt = base04
-              * primary        = base0D
-              * warning        = base0A
-              * urgent         = base09
-              * error          = base08
-              * success        = base0B
-              * outline        = base03
-              * =============================================================== */
+        in /* css */ ''                           /* === Stylix Base16 → Material-ish roles ===========================
+                              * surface        = base00
+                              * surface-alt    = base01
+                              * selection      = base02
+                              * on-surface     = base05
+                              * on-surface-alt = base04
+                              * primary        = base0D
+                              * warning        = base0A
+                              * urgent         = base09
+                              * error          = base08
+                              * success        = base0B
+                              * outline        = base03
+                              * =============================================================== */
 
-             * {
-               border: none;
-               border-radius: 0;
-               font-family: "${config.stylix.fonts.monospace.name}", monospace;
-               font-size: ${toString config.stylix.fonts.sizes.desktop}pt;
-               min-height: 0;
-             }
+                             * {
+                               border: none;
+                               border-radius: 0;
+                               font-family: "${config.stylix.fonts.monospace.name}", monospace;
+                               font-size: ${toString (config.stylix.fonts.sizes.desktop - 5)}pt;
+                               min-height: 0;
+                             }
 
-             window#waybar {
-               background: transparent;  /* surface */
-               color: #${colors.base05};       /* on-surface */
-             }
+                             window#waybar {
+                               background: transparent;          /* let compositor / bar bg show */
+                               padding-top: 5px;
+                               color: #${colors.base05};         /* on-surface */
+                             }
 
-             /* ===== Common module padding ===== */
+                             /* ===== Pill containers for all modules ===== */
 
-             #workspaces,
-             #cava,
-             #clock,
-             #pulseaudio,
-             #pulseaudio-slider,
-             #network,
-             #bluetooth,
-             #battery,
-             #language {
-               padding: 0 8px;
-             }
+                             #workspaces,
+                             #cava,
+                             #clock,
+                             #pulseaudio,
+                             #pulseaudio-slider,
+                             #network,
+                             #bluetooth,
+                             #battery,
+                             #language {
+                               padding: 3px 10px;
+                               margin: 0px 10px;
+                               background: #${colors.base01};        /* surface-alt */
+                               border-radius: 999px;                 /* pill shape */
+                               border: 1px solid #${colors.base03};  /* outline */
 
-             /* ===== Workspaces (hyprland/workspaces) ===== */
+                               /* make inner content not drift with weird defaults */
+                               /* these are GtkBox-like containers */
+                             }
 
-             #workspaces {
-               margin-left: 4px;
-             }
+                             /* small tweak so leftmost pill doesnt hug the edge */
+                             #workspaces {
+                               margin-left: 10px;
+                             }
 
-             #workspaces button {
-               padding: 0 6px;
-               margin: 0 2px;
-               background: transparent;
-               color: #${colors.base05}; /* on-surface */
-             }
 
-             #workspaces button:hover {
-               background: alpha(#${colors.base01}, 0.6); /* surface-alt w/ alpha */
-               border-radius: 4px;
-             }
+                  /* ===== Workspaces (hyprland/workspaces) ===== */
 
-             #workspaces button.active {
-               background: #${colors.base0D};  /* primary */
-               color: #${colors.base00};       /* on-primary */
-               border-radius: 4px;
-             }
+                             #workspaces button {
+                               padding: 0 0;
+                               margin: 2px 2px;
+                               background: transparent;
+                               color: #${colors.base05}; /* on-surface */
+                               border-radius: 999px;
+                             }
 
-             #workspaces button.urgent {
-               background: #${colors.base09};  /* urgent */
-               color: #${colors.base00};
-             }
+                             #workspaces button:hover {
+                               color: #${colors.base02};  /* selection */
+                             }
 
-             /* ===== Center clock ===== */
+                             #workspaces button.active {
+                             }
 
-             #clock {
-               font-weight: 500;
-             }
+                             #workspaces button.urgent {
+                               background: #${colors.base09};  /* urgent */
+                               color: #${colors.base00};
+                             }
 
-             /* ===== Pulseaudio icon ===== */
+                             /* ===== Pulseaudio icon ===== */
 
-             #pulseaudio {
-               margin-right: 4px;
-             }
+                             #pulseaudio {
+                               padding: 3px 14px 3px 5px;
+                             }
 
-             /* ===== Battery states ===== */
+                             #network {
+                                padding: 3px 12px 3px 9px;
+                             }
 
-             #battery.charging,
-             #battery.plugged {
-               color: #${colors.base0B}; /* success-ish */
-             }
+                             /* ===== Battery states ===== */
 
-             #battery.warning {
-               color: #${colors.base0A}; /* warning */
-             }
+                             #battery.charging,
+                             #battery.plugged {
+                               color: #${colors.base0B}; /* success */
+                             }
 
-             #battery.critical {
-               color: #${colors.base08}; /* error */
-             }
+                             #battery.warning {
+                               color: #${colors.base0A}; /* warning */
+                             }
 
-             /* ===== Network ===== */
+                             #battery.critical {
+                               color: #${colors.base08}; /* error */
+                             }
 
-             #network.disconnected {
-               color: #${colors.base08}; /* error */
-             }
+                             /* ===== Network ===== */
 
-             /* ===== Bluetooth ===== */
+                             #network.disconnected {
+                               color: #${colors.base08}; /* error */
+                             }
 
-             #bluetooth.disabled {
-               color: mix(#${colors.base05}, #${colors.base01}, 0.5); /* softer text */
-             }
+                             /* ===== Bluetooth ===== */
 
-             /* ===== Keyboard layout (hyprland/language) ===== */
+                             #bluetooth.disabled {
+                               color: #${colors.base04}; /* softer on-surface-alt */
+                             }
 
-             #language {
-               min-width: 24px;
-             }'';
+                             /* ===== Keyboard layout (hyprland/language) ===== */
+
+                             #language {
+                             }'';
       };
     };
   };
