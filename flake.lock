@@ -667,6 +667,26 @@
         "type": "github"
       }
     },
+    "noctalia": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1764290219,
+        "narHash": "sha256-iGxh3/uv3ZKn4+44qeOF0jnGyDEO+PofWrgRFLNFkag=",
+        "owner": "noctalia-dev",
+        "repo": "noctalia-shell",
+        "rev": "5e205ad69a246e841a4147e17a1bc623a116951d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "noctalia-dev",
+        "repo": "noctalia-shell",
+        "type": "github"
+      }
+    },
     "nur": {
       "inputs": {
         "flake-parts": [
@@ -723,6 +743,7 @@
         "hyprland": "hyprland",
         "import-tree": "import-tree",
         "nixpkgs": "nixpkgs_3",
+        "noctalia": "noctalia",
         "stylix": "stylix",
         "treefmt-nix": "treefmt-nix",
         "walker": "walker"

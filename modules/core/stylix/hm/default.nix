@@ -151,7 +151,7 @@
 
             waybar = {
               enable = true;
-              font = "monospace";
+              # font = "monospace";
               addCss = false;
             };
           };

@@ -11,167 +11,187 @@
     ];
 
     programs.walker.themes.bugala = {
-      style =
+      style = let
+        colors = config.lib.stylix.colors;
+      in
         /*
         css
         */
-        with c; ''
-                              * {
-                      all: unset;
-                    }
+        ''          /* === Stylix Base16 → roles ===========================
+             * surface        = base00
+             * surface-alt    = base01
+             * selection      = base02
+             * on-surface     = base05
+             * on-surface-alt = base04
+             * primary        = base0D
+             * warning        = base0A
+             * urgent         = base09
+             * error          = base08
+             * success        = base0B
+             * outline        = base03
+             * ===================================================== */
 
-                    .normal-icons {
-                      -gtk-icon-size: 16px;
-                    }
+            * {
+              all: unset;
+            }
 
-                    .large-icons {
-                      -gtk-icon-size: 32px;
-                    }
+            .normal-icons {
+              -gtk-icon-size: 16px;
+            }
 
-                    scrollbar {
-                      opacity: 0;
-                    }
+            .large-icons {
+              -gtk-icon-size: 32px;
+            }
 
-                    .box-wrapper {
-                      box-shadow:
-                        0 19px 38px rgba(0, 0, 0, 0.3),
-                        0 15px 12px rgba(0, 0, 0, 0.22);
-                      background: alpha(${backgroundDefault}, 0.8);
-                      padding: 20px;
-                      border-radius: 20px;
-                      border: 1px solid alpha(${border}, 0.75);
-                    }
+            scrollbar {
+              opacity: 0;
+            }
 
-                    .preview-box,
-                    .elephant-hint,
-                    .placeholder {
-                      color: ${textDefault};
-                    }
+            .box-wrapper {
+              box-shadow:
+                0 19px 38px rgba(0, 0, 0, 0.3),
+                0 15px 12px rgba(0, 0, 0, 0.22);
+              background: alpha(#${colors.base00}, 0.8);          /* surface */
+              padding: 20px;
+              border-radius: 20px;
+              border: 1px solid alpha(#${colors.base03}, 0.75);   /* outline */
+              font-family: "${config.stylix.fonts.sansSerif.name}";
+              font-size: ${toString config.stylix.fonts.sizes.desktop}px;
+              color: #${colors.base05};                           /* on-surface */
+            }
 
-                    .box {
-                    }
+            .preview-box,
+            .elephant-hint,
+            .placeholder {
+              color: #${colors.base05};   /* on-surface */
+            }
 
-                    .search-container {
-                      border-radius: 10px;
-                    }
+            .box {
+            }
 
-                    .input placeholder {
-                      opacity: 0.5;
-                    }
+            .search-container {
+              border-radius: 10px;
+            }
 
-                    .input {
-                      caret-color: @selected-text;
-                      background: darker(${backgroundAlpha50});
-                      padding: 10px;
-                    }
+            .input placeholder {
+              opacity: 0.5;
+            }
 
-                    .input:focus,
-                    .input:active {
-                    }
+            .input {
+              caret-color: #${colors.base05};
+              background: darker(alpha(#${colors.base01}, 0.5));  /* surface-alt, slightly darker */
+              padding: 10px;
+              border-radius: 10px;
+            }
 
-                    .content-container {
-                    }
+            .input:focus,
+            .input:active {
+            }
 
-                    .placeholder {
-                    }
+            .content-container {
+            }
 
-                    .scroll {
-                    }
+            .placeholder {
+            }
 
-                    .list {
-                      color: ${textDefault};
-                    }
+            .scroll {
+            }
 
-                    child {
-                    }
+            .list {
+              color: #${colors.base05};   /* on-surface */
+            }
 
-                    .item-box {
-                      border-radius: 10px;
-                      padding: 10px;
-                    }
+            child {
+            }
 
-                    .item-quick-activation {
-                      margin-left: 10px;
-                      background: alpha(${background}, 0.25);
-                      border-radius: 5px;
-                      padding: 10px;
-                    }
+            .item-box {
+              border-radius: 10px;
+              padding: 10px;
+            }
 
-                    child:hover .item-box,
-                    child:selected .item-box {
-                      background: darker(alpha(${backgroundDefault}, 0.5));
-                    }
+            .item-quick-activation {
+              margin-left: 10px;
+              background: alpha(#${colors.base02}, 0.25);  /* selection tint */
+              border-radius: 5px;
+              padding: 10px;
+            }
 
-                    .item-text-box {
-                    }
+            child:hover .item-box,
+            child:selected .item-box {
+              background: darker(alpha(#${colors.base00}, 0.5));  /* hover on surface */
+            }
 
-                    .item-text {
-                    }
+            .item-text-box {
+            }
 
-                    .item-subtext {
-                      font-size: 12px;
-                      opacity: 0.5;
-                    }
+            .item-text {
+            }
 
-                    .item-image,
-                    .item-image-text {
-                      margin-right: 10px;
-                    }
+            .item-subtext {
+              font-size: 12px;
+              opacity: 0.5;
+            }
 
-                    .item-image-text {
-                      font-size: 28px;
-                    }
+            .item-image,
+            .item-image-text {
+              margin-right: 10px;
+            }
 
-                    .preview {
-                      border: 1px solid alpha(${border}, 0.25);
-                      padding: 10px;
-                      border-radius: 10px;
-                      color: ${foreground};
-                    }
+            .item-image-text {
+              font-size: 28px;
+            }
 
-                    .calc .item-text {
-                      font-size: 24px;
-                    }
+            .preview {
+              border: 1px solid alpha(#${colors.base03}, 0.25);  /* outline */
+              padding: 10px;
+              border-radius: 10px;
+              color: #${colors.base05};                          /* on-surface */
+            }
 
-                    .calc .item-subtext {
-                    }
+            .calc .item-text {
+              font-size: 24px;
+            }
 
-                    .symbols .item-image {
-                      font-size: 24px;
-                    }
+            .calc .item-subtext {
+            }
 
-                    .todo.done .item-text-box {
-                      opacity: 0.25;
-                    }
+            .symbols .item-image {
+              font-size: 24px;
+            }
 
-                    .todo.urgent {
-                      font-size: 24px;
-                    }
+            .todo.done .item-text-box {
+              opacity: 0.25;
+            }
 
-                    .todo.active {
-                      font-weight: bold;
-                    }
+            .todo.urgent {
+              font-size: 24px;
+              color: #${colors.base09};   /* urgent */
+            }
 
-                    .bluetooth.disconnected {
-                      opacity: 0.5;
-                    }
+            .todo.active {
+              font-weight: bold;
+              color: #${colors.base0D};   /* primary */
+            }
 
-                    .preview .large-icons {
-                      -gtk-icon-size: 64px;
-                    }
+            .bluetooth.disconnected {
+              opacity: 0.5;
+            }
 
-          .keybinds-wrapper,
-          .global-keybinds,
-          .item-keybinds {
-            margin: 0;
-            padding: 0;
-            min-height: 0;
-          }
+            .preview .large-icons {
+              -gtk-icon-size: 64px;
+            }
 
-          .keybinds-wrapper > * {
-            opacity: 0;
-          }
-        '';
+            .keybinds-wrapper,
+            .global-keybinds,
+            .item-keybinds {
+              margin: 0;
+              padding: 0;
+              min-height: 0;
+            }
+
+            .keybinds-wrapper > * {
+              opacity: 0;
+            }'';
 
       # Check out the default layouts for examples https://github.com/abenz1267/walker/tree/master/resources/themes/default
       layouts = {
@@ -190,7 +210,7 @@
                   <style>
                     <class name="box-wrapper"></class>
                   </style>
-                  <property name="width-request">644</property>
+                  <property name="width-request">250</property>
                   <property name="overflow">hidden</property>
                   <property name="orientation">horizontal</property>
                   <property name="valign">center</property>
@@ -263,7 +283,7 @@
                               <property name="hexpand">true</property>
                               <property name="can_focus">false</property>
                               <property name="overlay-scrolling">true</property>
-                              <property name="max-content-width">600</property>
+                              <property name="max-content-width">250</property>
                               <property name="max-content-height">300</property>
                               <property name="min-content-height">0</property>
                               <property name="propagate-natural-height">true</property>

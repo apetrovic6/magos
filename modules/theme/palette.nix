@@ -32,6 +32,7 @@
     background = "#${c.base01}";
     foreground = "#${c.base05}";
     textDefault = "#${c.base05}";
+    primary = "#${c.base0B}";
     textAlternate = "#${c.base04}";
     textPopup = "#${c.base0A}";
     border = "#${c.base0D}";

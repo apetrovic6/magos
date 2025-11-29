@@ -14,6 +14,7 @@
     imports = [
       self.homeModules.walker-bugala
       inputs.walker.homeManagerModules.default
+      self.homeModules.walker-menus
     ];
     options.magos.hm.core.walker.enable = mkEnableOption "Enable and setup Walker";
 
@@ -32,6 +33,7 @@
           theme = "bugala";
           hide_acttion_hints = true;
           hide_action_hints_dmenu = true;
+          hide_quick_activation = true;
 
           placeholders = {
             default = {

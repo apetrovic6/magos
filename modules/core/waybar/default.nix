@@ -26,7 +26,7 @@
           mainBar = {
             layer = "top";
             position = "top";
-            height = 20;
+            height = 15;
             modules-left = ["hyprland/workspaces" "cava"];
             modules-center = ["clock"];
             modules-right = ["pulseaudio" "network" "bluetooth" "battery" "hyprland/language"];
@@ -116,21 +116,22 @@
             cava = {
               # cava_config = "$XDG_CONFIG_HOME/cava/cava.conf";
               framerate = 60;
-              autosens = 1;
-              sensitivity = 100;
+              # autosens = 1;
+              sensitivity = 50;
               bars = 10;
               lower_cutoff_freq = 50;
               higher_cutoff_freq = 10000;
-              hide_on_silence = false;
+              hide_on_silence = true;
               # format_silent = "quiet";
+              sleep_timer = 5;
               method = "pulse";
               source = "auto";
               stereo = true;
               reverse = false;
               bar_delimiter = 0;
               monstercat = false;
-              waves = false;
-              noise_reduction = 0.77;
+              waves = true;
+              noise_reduction = 1;
               input_delay = 2;
               format-icons = ["▁" "▂" "▃" "▄" "▅" "▆" "▇" "█"];
               actions = {
@@ -142,124 +143,128 @@
 
         style = let
           colors = config.lib.stylix.colors;
-        in /* css */ ''                           /* === Stylix Base16 → Material-ish roles ===========================
-                              * surface        = base00
-                              * surface-alt    = base01
-                              * selection      = base02
-                              * on-surface     = base05
-                              * on-surface-alt = base04
-                              * primary        = base0D
-                              * warning        = base0A
-                              * urgent         = base09
-                              * error          = base08
-                              * success        = base0B
-                              * outline        = base03
-                              * =============================================================== */
+        in
+          /*
+          css
+          */
+          ''                     /* === Stylix Base16 → Material-ish roles ===========================
+                        * surface        = base00
+                        * surface-alt    = base01
+                        * selection      = base02
+                        * on-surface     = base05
+                        * on-surface-alt = base04
+                        * primary        = base0D
+                        * warning        = base0A
+                        * urgent         = base09
+                        * error          = base08
+                        * success        = base0B
+                        * outline        = base03
+                        * =============================================================== */
 
-                             * {
-                               border: none;
-                               border-radius: 0;
-                               font-family: "${config.stylix.fonts.monospace.name}", monospace;
-                               font-size: ${toString (config.stylix.fonts.sizes.desktop - 5)}pt;
-                               min-height: 0;
-                             }
+                       * {
+                         border: none;
+                         border-radius: 0;
+                         font-family: "${config.stylix.fonts.monospace.name}", monospace;
+                         font-size: ${toString (config.stylix.fonts.sizes.desktop - 5)}pt;
+                         min-height: 0;
+                       }
 
-                             window#waybar {
-                               background: transparent;          /* let compositor / bar bg show */
-                               padding-top: 5px;
-                               color: #${colors.base05};         /* on-surface */
-                             }
+                       window#waybar {
+                         background: transparent;          /* let compositor / bar bg show */
+                         padding-top: 15px;
+                         color: #${colors.base05};         /* on-surface */
+                       }
 
-                             /* ===== Pill containers for all modules ===== */
+                       /* ===== Pill containers for all modules ===== */
 
-                             #workspaces,
-                             #cava,
-                             #clock,
-                             #pulseaudio,
-                             #pulseaudio-slider,
-                             #network,
-                             #bluetooth,
-                             #battery,
-                             #language {
-                               padding: 3px 10px;
-                               margin: 0px 10px;
-                               background: #${colors.base01};        /* surface-alt */
-                               border-radius: 999px;                 /* pill shape */
-                               border: 1px solid #${colors.base03};  /* outline */
+                       #workspaces,
+                       #cava,
+                       #clock,
+                       #pulseaudio,
+                       #pulseaudio-slider,
+                       #network,
+                       #bluetooth,
+                       #battery,
+                       #language {
+                         padding: 3px 10px;
+                         margin: 0px 10px;
+                         background: #${colors.base01};        /* surface-alt */
+                         border-radius: 999px;                 /* pill shape */
+                         border: 1px solid #${colors.base03};  /* outline */
 
-                               /* make inner content not drift with weird defaults */
-                               /* these are GtkBox-like containers */
-                             }
+                         /* make inner content not drift with weird defaults */
+                         /* these are GtkBox-like containers */
+                       }
 
-                             /* small tweak so leftmost pill doesnt hug the edge */
-                             #workspaces {
-                               margin-left: 10px;
-                             }
+                       /* small tweak so leftmost pill doesnt hug the edge */
+                       #workspaces {
+                         margin-left: 10px;
+                       }
 
 
-                  /* ===== Workspaces (hyprland/workspaces) ===== */
+            /* ===== Workspaces (hyprland/workspaces) ===== */
 
-                             #workspaces button {
-                               padding: 0 0;
-                               margin: 2px 2px;
-                               background: transparent;
-                               color: #${colors.base05}; /* on-surface */
-                               border-radius: 999px;
-                             }
+                       #workspaces button {
+                         padding: 0 0;
+                         margin: 2px 2px;
+                         background: transparent;
+                         color: #${colors.base05}; /* on-surface */
+                         border-radius: 999px;
+                       }
 
-                             #workspaces button:hover {
-                               color: #${colors.base02};  /* selection */
-                             }
+                       #workspaces button:hover {
+                         color: #${colors.base02};  /* selection */
+                       }
 
-                             #workspaces button.active {
-                             }
+                       #workspaces button.active {
+                       }
 
-                             #workspaces button.urgent {
-                               background: #${colors.base09};  /* urgent */
-                               color: #${colors.base00};
-                             }
+                       #workspaces button.urgent {
+                         background: #${colors.base09};  /* urgent */
+                         color: #${colors.base00};
+                       }
 
-                             /* ===== Pulseaudio icon ===== */
+                       /* ===== Pulseaudio icon ===== */
 
-                             #pulseaudio {
-                               padding: 3px 14px 3px 5px;
-                             }
+                       #pulseaudio {
+                         padding: 3px 14px 3px 5px;
+                       }
 
-                             #network {
-                                padding: 3px 12px 3px 9px;
-                             }
+                       #network {
+                          padding: 3px 12px 3px 9px;
+                       }
 
-                             /* ===== Battery states ===== */
+                       /* ===== Battery states ===== */
 
-                             #battery.charging,
-                             #battery.plugged {
-                               color: #${colors.base0B}; /* success */
-                             }
+                       #battery.charging,
+                       #battery.plugged {
+                         color: #${colors.base0B}; /* success */
+                       }
 
-                             #battery.warning {
-                               color: #${colors.base0A}; /* warning */
-                             }
+                       #battery.warning {
+                         color: #${colors.base0A}; /* warning */
+                       }
 
-                             #battery.critical {
-                               color: #${colors.base08}; /* error */
-                             }
+                       #battery.critical {
+                         color: #${colors.base08}; /* error */
+                       }
 
-                             /* ===== Network ===== */
+                       /* ===== Network ===== */
 
-                             #network.disconnected {
-                               color: #${colors.base08}; /* error */
-                             }
+                       #network.disconnected {
+                         color: #${colors.base08}; /* error */
+                       }
 
-                             /* ===== Bluetooth ===== */
+                       /* ===== Bluetooth ===== */
 
-                             #bluetooth.disabled {
-                               color: #${colors.base04}; /* softer on-surface-alt */
-                             }
+                       #bluetooth.disabled {
+                         color: #${colors.base04}; /* softer on-surface-alt */
+                       }
 
-                             /* ===== Keyboard layout (hyprland/language) ===== */
+                       /* ===== Keyboard layout (hyprland/language) ===== */
 
-                             #language {
-                             }'';
+                       #language {
+                       }'';
       };
     };
   };

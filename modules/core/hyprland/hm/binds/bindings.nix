@@ -39,6 +39,8 @@
         # Hyprpanel
         "${modifier} SHIFT, SPACE, Toggle Hyprpanel, exec, hyprpanel toggleWindow bar-0"
         "${modifier} SHIFT, N, Notifications, exec, hyprpanel t notificationsmenu"
+
+        "${modifier}, ESCAPE, Power Menu, exec, walker -m menus:power-menu"
       ];
     };
 }

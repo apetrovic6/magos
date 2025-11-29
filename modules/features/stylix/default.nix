@@ -21,7 +21,6 @@
     imports = [
       self.homeModules.stylix
     ];
-
-    magos.hm.hyprlock.enable = lib.mkDefault true;
+    magos.hm.stylix.enable = lib.mkDefault true;
   };
 }
