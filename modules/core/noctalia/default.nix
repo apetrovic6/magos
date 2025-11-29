@@ -25,7 +25,13 @@
         systemd.enable = true;
 
         settings = {
-          wallpaper.enabled = false;
+          settingsVersion = 25;
+          changelog.lastSeenVersion = "3.4.0-git";
+
+          wallpaper = {
+            enabled = true;
+            defaultWallpaper = lib.mkForce config.stylix.image;
+          };
           bar = {
             density = "mini";
             position = "top";
@@ -61,14 +67,15 @@
                   formatVertical = "HH mm";
                   id = "Clock";
                   useMonospacedFont = true;
-                  usePrimaryColor = true;
+                  usePrimaryColor = false;
                 }
               ];
               right = [
                 {
-                  alwaysShowPercentage = false;
+                  alwaysShowPercentage = true;
                   id = "Battery";
                   warningThreshold = 30;
+                  displayMode = "alwaysShow";
                 }
 
                 {
@@ -77,6 +84,7 @@
 
                 {
                   id = "Volume";
+                  displayMode = "alwaysShow";
                 }
 
                 {
@@ -92,6 +100,7 @@
 
                 {
                   id = "KeyboardLayout";
+                  displayMode = "forceOpen";
                 }
 
                 {
@@ -124,27 +133,139 @@
 
           location = {
           };
+
+          ui = {
+            fontDefault = config.stylix.fonts.monospace.name;
+            fontFixed = config.stylix.fonts.monospace.name;
+            tooltipsEnabled = true;
+            panelBackgroundOpacity = 1;
+            panelsAttachedToBar = false;
+            settingsPanelsAttachToBar = false;
+          };
+
+          calendar = {
+            cards = [
+              {
+                id = "banner-card";
+                enabled = true;
+              }
+              {
+                id = "calendar-card";
+                enabled = true;
+              }
+              {
+                id = "timer-card";
+                enabled = false;
+              }
+              {
+                id = "weather-card";
+                enabled = true;
+              }
+            ];
+          };
+
+          dock.enabled = false;
+
+          sessionMenu = {
+            showHeader = false;
+            powerOptions = [
+              {
+                action = "lock";
+                enabled = true;
+              }
+              {
+                action = "suspend";
+                enabled = true;
+              }
+              {
+                action = "hibernate";
+                enabled = false;
+              }
+              {
+                action = "reboot";
+                enabled = true;
+              }
+              {
+                action = "logout";
+                enabled = true;
+              }
+              {
+                action = "shutdown";
+                enabled = true;
+              }
+            ];
+          };
+
+          controlCenter = {
+            position = "close_to_bar_button";
+            shortcuts = {
+              left = [
+              ];
+              right = [
+                {
+                  id = "ScreenRecorder";
+                }
+                {
+                  id = "Notifications";
+                }
+                {
+                  id = "PowerProfile";
+                }
+                {
+                  id = "KeepAwake";
+                }
+                {
+                  id = "NightLight";
+                }
+              ];
+            };
+            cards = [
+              {
+                enabled = true;
+                id = "profile-card";
+              }
+              {
+                enabled = true;
+                id = "shortcuts-card";
+              }
+              {
+                enabled = false;
+                id = "audio-card";
+              }
+              {
+                enabled = false;
+                id = "weather-card";
+              }
+              {
+                enabled = false;
+                id = "media-sysmon-card";
+              }
+            ];
+          };
         };
 
         colors = {
-          mSurface = "#${config.lib.stylix.colors.base00}";
-          mSurfaceVariant = "#${config.lib.stylix.colors.base01}";
-          mOnSurface = "#${config.lib.stylix.colors.base05}";
-          mOnSurfaceVariant = "#${config.lib.stylix.colors.base04}";
+          # Semantic
+          mError = "#${config.lib.stylix.colors.base08}";
+          mOnError = "#${config.lib.stylix.colors.base00}";
 
+          # Accents
           mPrimary = "#${config.lib.stylix.colors.base0D}";
           mOnPrimary = "#${config.lib.stylix.colors.base00}";
           mSecondary = "#${config.lib.stylix.colors.base0E}";
           mOnSecondary = "#${config.lib.stylix.colors.base00}";
-          mTertiary = "#${config.lib.stylix.colors.base0C}";
+          mTertiary = "#${config.lib.stylix.colors.base0B}";
           mOnTertiary = "#${config.lib.stylix.colors.base00}";
 
-          mHover = "#${config.lib.stylix.colors.base0B}";
+          # Surfaces
+          mSurface = "#${config.lib.stylix.colors.base00}";
+          mOnSurface = "#${config.lib.stylix.colors.base05}";
+          mSurfaceVariant = "#${config.lib.stylix.colors.base01}";
+          mOnSurfaceVariant = "#${config.lib.stylix.colors.base04}";
+
+          # Hover & utilities
+          mHover = "#${config.lib.stylix.colors.base02}";
           mOnHover = "#${config.lib.stylix.colors.base05}";
-
-          mError = "#${config.lib.stylix.colors.base08}";
-          mOnError = "#${config.lib.stylix.colors.base00}";
-
           mOutline = "#${config.lib.stylix.colors.base03}";
           mShadow = "#${config.lib.stylix.colors.base00}";
         };
