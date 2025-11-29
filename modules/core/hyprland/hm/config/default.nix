@@ -33,7 +33,6 @@
         disable_splash_rendering = true;
         focus_on_activate = true;
         anr_missed_pings = 3;
-        new_window_takes_over_fullscreen = 1;
       };
 
       dwindle = {

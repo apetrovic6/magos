@@ -3,7 +3,9 @@
     config,
     lib,
     ...
-  }: {
+  }: let
+    inherit (lib) mkOption types;
+  in {
     wayland.windowManager.hyprland.settings = {
       # See https://wiki.hyprland.org/Configuring/Monitors/
       # List current monitors and resolutions possible: hyprctl monitors
