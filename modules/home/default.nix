@@ -32,6 +32,8 @@
       self.homeModules.features-walker
       self.homeModules.noctalia
       self.homeModules.waybar
+      self.homeModules.swaync
+      self.homeModules.swayosd
 
       self.homeModules.features-hyprlock
       self.homeModules.features-hypridle
@@ -39,6 +41,8 @@
       self.homeManagerModules.hyprpanel
     ];
 
+    magos.hm.core.swayosd.enable = lib.mkDefault true;
+    magos.hm.core.swaync.enable = lib.mkDefault true;
     magos.hm.core.waybar.enable = lib.mkDefault true;
     magos.hm.hyprlock.enable = lib.mkDefault true;
     magos.hm.noctalia.enable = mkDefault false;

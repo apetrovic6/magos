@@ -87,11 +87,17 @@
         portalPackage = self.inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland;
 
         settings = {
+          windowrule = [
+            "float 1, center 1, size 875 600, match:class (ghostty.wiremix)"
+            "float 1, center 1, size 875 600, match:class (ghostty.bluetui)"
+            "float 1, center 1, size 875 600, match:class (ghostty.impala)"
+          ];
+
           # Blur Walker’s layer surface (namespace is “walker”)
           layerrule = [
-            "blur = walker"
-            "blur_popups =walker" # if Walker shows popups/tooltips
-            "ignore_alpha = 0.5" # reduces halo at fully transparent pixels
+            "match:class walker, blur 1, blur_popups 1, ignore_alpha 0.5"
+            "match:class swaync-control-center, blur 1, blur_popups 1, ignore_alpha 0.5"
+            "match:class swaync-notification-window, blur 1, blur_popups 1, ignore_alpha 0.5"
           ];
           decoration = {
             rounding = 10;

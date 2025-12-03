@@ -37,10 +37,12 @@
         "${modifier}, F, Terminal File Manager, exec, ${terminal} -e ${cliFileManager}"
 
         # Hyprpanel
-        "${modifier} SHIFT, SPACE, Toggle Hyprpanel, exec, hyprpanel toggleWindow bar-0"
+        # "${modifier} SHIFT, SPACE, Toggle Hyprpanel, exec, hyprpanel toggleWindow bar-0"
         "${modifier} SHIFT, N, Notifications, exec, hyprpanel t notificationsmenu"
 
         "${modifier}, ESCAPE, Power Menu, exec, walker -m menus:power-menu"
+        "${modifier} SHIFT, N, Toggle SwayNC, exec, swaync-client -t"
+        "${modifier} SHIFT, SPACE, Toggle Waybar, exec, pkill -SIGUSR1 waybar"
       ];
     };
 }

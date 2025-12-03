@@ -34,7 +34,7 @@
         installBatSyntax = true;
         installVimSyntax = true;
 
-        # settings.window-padding-x = 10;
+        settings.window-padding-x = 5;
         # settings.window-padding-y = 10;
 
         settings.keybind = [

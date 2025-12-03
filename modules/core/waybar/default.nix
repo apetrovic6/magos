@@ -6,6 +6,7 @@
     ...
   }: let
     inherit (lib) types mkOption mkEnableOption;
+    transition = "all 0.3s cubic-bezier(.55,-0.68,.48,1.682)";
     cfg = config.magos.hm.core.waybar;
   in {
     imports = [./settings.nix];
@@ -27,9 +28,9 @@
             layer = "top";
             position = "top";
             height = 15;
-            modules-left = ["hyprland/workspaces" "cava"];
+            modules-left = ["custom/button" "hyprland/workspaces"];
             modules-center = ["clock"];
-            modules-right = ["pulseaudio" "network" "bluetooth" "battery" "hyprland/language"];
+            modules-right = ["pulseaudio" "network" "bluetooth" "battery" "custom/notification" "hyprland/language"];
 
             "hyprland/workspaces" = {
               on-click = "activate";
@@ -48,12 +49,38 @@
               };
             };
 
+            "custom/button" = {
+              format = "";
+              tooltip = false;
+            };
+
+            "custom/notification" = {
+              "tooltip" = true;
+              "format" = "<span size='${toString config.stylix.fonts.sizes.desktop}pt'>{0} {icon}</span>";
+              "format-icons" = {
+                "notification" = "󱅫";
+                "none" = "󰂜";
+                "dnd-notification" = "󰂠";
+                "dnd-none" = "󰪓";
+                "inhibited-notification" = "󰂛";
+                "inhibited-none" = "󰪑";
+                "dnd-inhibited-notification" = "󰂛";
+                "dnd-inhibited-none" = "󰪑";
+              };
+              "return-type" = "json";
+              "exec-if" = "which swaync-client";
+              "exec" = "swaync-client -swb";
+              "on-click" = "swaync-client -t -sw";
+              "on-click-right" = "swaync-client -d -sw";
+              "escape" = true;
+            };
+
             "hyprland/language" = {
               "format" = "{short}";
             };
 
             clock = {
-              format = "{:L%A %H:%M}";
+              format = "{:%H:%M}";
               format-alt = "{:L%d %B W%V %Y}";
               tooltip = false;
             };
@@ -61,22 +88,22 @@
             network = {
               format-icons = ["󰤯" "󰤟" "󰤢" "󰤢" "󰤥" "󰤨"];
               format = "{icon}";
-              format-wifi = "{icon}";
-              format-ethernet = "󰀂";
+              format-wifi = "{essid}{icon}";
+              format-ethernet = "󰀂  Wired";
               format-disconnected = "󰤮";
               tooltip-format-wifi = "{essid} ({frequency} GHz)\n⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}";
               tooltip-format-ethernet = "⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}";
               tooltip-format-disconnected = "Disconnected";
               interval = 3;
               spacing = 1;
-              on-click = "ghostty -e impala";
+              on-click = "ghostty --class=ghostty.wiremix  -e ${lib.getExe pkgs.impala}";
             };
 
             battery = {
               format = "{capacity}% {icon}";
-              format-discharging = "{icon}";
+              format-discharging = "{icon} {capacity}%";
               format-charging = "{icon}";
-              format-plugged = "";
+              format-plugged = " {time}";
               format-icons = {
                 charging = ["󰢜" "󰂆" "󰂇" "󰂈" "󰢝" "󰂉" "󰢞" "󰂊" "󰂋" "󰂅"];
                 default = ["󰁺" "󰁻" "󰁼" "󰁽" "󰁾" "󰁿" "󰂀" "󰂁" "󰂂" "󰁹"];
@@ -94,22 +121,22 @@
             };
 
             bluetooth = {
-              format = "";
+              format = " {status}";
               format-disabled = "󰂲";
               format-connected = "";
               tooltip-format = "Devices connected: {num_connections}";
-              on-click = "ghostty -e bluetui";
+              on-click = "ghostty --class=ghostty.wiremix -e ${lib.getExe pkgs.bluetui}";
             };
 
             pulseaudio = {
-              format = "{icon}";
-              on-click = "xdg-terminal-exec --app-id=com.omarchy.Wiremix -e wiremix";
+              format = "{volume}% {icon}";
+              on-click = "ghostty --class=ghostty.wiremix -e ${lib.getExe pkgs.wiremix}";
               on-click-right = "pamixer -t";
               tooltip-format = "Playing at {volume}%";
               scroll-step = 5;
               format-muted = " ";
               format-icons = {
-                default = ["" "" ""];
+                default = [" "];
               };
             };
 
@@ -117,7 +144,7 @@
               # cava_config = "$XDG_CONFIG_HOME/cava/cava.conf";
               framerate = 60;
               # autosens = 1;
-              sensitivity = 50;
+              sensitivity = 30;
               bars = 10;
               lower_cutoff_freq = 50;
               higher_cutoff_freq = 10000;
@@ -164,7 +191,7 @@
                        * {
                          border: none;
                          border-radius: 0;
-                         font-family: "${config.stylix.fonts.monospace.name}", monospace;
+                         font-family: ${config.stylix.fonts.monospace.name};
                          font-size: ${toString (config.stylix.fonts.sizes.desktop - 5)}pt;
                          min-height: 0;
                        }
@@ -177,20 +204,35 @@
 
                        /* ===== Pill containers for all modules ===== */
 
+                       #custom-button {
+                         margin: 0px 15px;
+                         margin-top: 5px;
+                         padding-top: 3px;
+                         padding-bottom: 3px;
+                         padding-left: 10px;
+                         padding-right: 15px;
+
+                         background: alpha(#${colors.base01}, 0.2);        /* surface-alt */
+                         border-radius: 999px;                 /* pill shape */
+                       }
+
                        #workspaces,
                        #cava,
                        #clock,
                        #pulseaudio,
-                       #pulseaudio-slider,
                        #network,
                        #bluetooth,
+                       #tooltip,
+                       #custom-notification,
                        #battery,
                        #language {
                          padding: 3px 10px;
-                         margin: 0px 10px;
-                         background: #${colors.base01};        /* surface-alt */
+                         margin: 0px 15px;
+                         transition: ${transition};
+                         margin-top: 5px;
+                         background: alpha(#${colors.base01}, 0.2);        /* surface-alt */
                          border-radius: 999px;                 /* pill shape */
-                         border: 1px solid #${colors.base03};  /* outline */
+                       /*  border: 1px solid #${colors.base03}; */  /* outline */
 
                          /* make inner content not drift with weird defaults */
                          /* these are GtkBox-like containers */
@@ -217,6 +259,7 @@
                        }
 
                        #workspaces button.active {
+                         transition: ${transition};
                        }
 
                        #workspaces button.urgent {
@@ -227,7 +270,7 @@
                        /* ===== Pulseaudio icon ===== */
 
                        #pulseaudio {
-                         padding: 3px 14px 3px 5px;
+                          padding: 0px 8px;
                        }
 
                        #network {
@@ -264,7 +307,13 @@
                        /* ===== Keyboard layout (hyprland/language) ===== */
 
                        #language {
-                       }'';
+                       }
+
+
+                       #tooltip {
+                         border: 1px solid #${colors.base03};
+                       }
+          '';
       };
     };
   };

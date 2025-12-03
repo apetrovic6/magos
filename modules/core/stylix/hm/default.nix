@@ -43,7 +43,7 @@
         };
         popups = lib.mkOption {
           type = lib.types.float;
-          default = 0.9;
+          default = 0.8;
           description = "Opacity of popups (0.0–1.0).";
         };
         applications = lib.mkOption {
@@ -116,7 +116,7 @@
             qt.enable = true;
             qutebrowser.enable = true;
             starship.enable = true;
-            swaync.enable = true;
+            swaync.enable = false;
             zathura.enable = true;
             obsidian.enable = true;
             fzf.enable = true;
