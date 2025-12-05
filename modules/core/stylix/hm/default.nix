@@ -33,17 +33,17 @@
       opacity = {
         terminal = lib.mkOption {
           type = lib.types.float;
-          default = 0.8;
+          default = 0.75;
           description = "Opacity of the terminal (0.0–1.0).";
         };
         desktop = lib.mkOption {
           type = lib.types.float;
-          default = 0.8;
+          default = 0.5;
           description = "Opacity of the desktop (0.0–1.0).";
         };
         popups = lib.mkOption {
           type = lib.types.float;
-          default = 0.8;
+          default = 0.5;
           description = "Opacity of popups (0.0–1.0).";
         };
         applications = lib.mkOption {

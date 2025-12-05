@@ -98,6 +98,7 @@
             "match:class walker, blur 1, blur_popups 1, ignore_alpha 0.5"
             "match:class swaync-control-center, blur 1, blur_popups 1, ignore_alpha 0.5"
             "match:class swaync-notification-window, blur 1, blur_popups 1, ignore_alpha 0.5"
+            "match:class waybar, blur 1, blur_popups 1, ignore_alpha 0.5"
           ];
           decoration = {
             rounding = 10;

@@ -29,8 +29,8 @@
             position = "top";
             height = 15;
             modules-left = ["custom/button" "hyprland/workspaces"];
-            modules-center = ["clock"];
-            modules-right = ["pulseaudio" "network" "bluetooth" "battery" "custom/notification" "hyprland/language"];
+            modules-center = ["group/center" ];
+            modules-right = [ "group/audio" "group/connectivity" "hyprland/language"];
 
             "hyprland/workspaces" = {
               on-click = "activate";
@@ -47,6 +47,23 @@
                 "4" = [];
                 "5" = [];
               };
+            };
+
+
+          "group/audio" = {
+            orientation = "horizontal";
+            modules = ["wireplumber" "wireplumber#source"];
+
+          };
+            
+            "group/connectivity" = {
+               orientation = "horizontal";
+               modules = [ "network" "bluetooth" "battery" ];
+             };
+
+            "group/center" = {
+              orientation = "horizontal";
+              modules = [ "clock" "custom/notification" ];
             };
 
             "custom/button" = {
@@ -128,9 +145,23 @@
               on-click = "ghostty --class=ghostty.wiremix -e ${lib.getExe pkgs.bluetui}";
             };
 
+            wireplumber= {
+                format = "{volume}% {icon} ";
+                format-muted= "";
+                on-click = "ghostty --class=ghostty.wiremix -e ${lib.getExe pkgs.wiremix}";
+                format-icons = ["" "" ""];
+            };
+
+            "wireplumber#source"= {
+                node-type= "Audio/Source";
+                format= "{volume}% 󰍬";
+                format-muted= "󰍭";
+                   on-click-right= "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
+                scroll-step= 5;
+            };
+
             pulseaudio = {
               format = "{volume}% {icon}";
-              on-click = "ghostty --class=ghostty.wiremix -e ${lib.getExe pkgs.wiremix}";
               on-click-right = "pamixer -t";
               tooltip-format = "Playing at {volume}%";
               scroll-step = 5;
@@ -211,26 +242,30 @@
                          padding-bottom: 3px;
                          padding-left: 10px;
                          padding-right: 15px;
-
-                         background: alpha(#${colors.base01}, 0.2);        /* surface-alt */
+                         background: alpha(#${colors.base01}, ${toString config.stylix.opacity.desktop});        /* surface-alt */
                          border-radius: 999px;                 /* pill shape */
                        }
 
-                       #workspaces,
-                       #cava,
                        #clock,
-                       #pulseaudio,
-                       #network,
-                       #bluetooth,
-                       #tooltip,
                        #custom-notification,
                        #battery,
+                       #wireplumber,
+                       #wireplumber.source {
+                         margin: 0 3px;
+                      }
+
+                       #workspaces,
+                       #cava,
+                       #connectivity,
+                       #audio,
+                       #tooltip,
+                       #center,
                        #language {
                          padding: 3px 10px;
                          margin: 0px 15px;
                          transition: ${transition};
                          margin-top: 5px;
-                         background: alpha(#${colors.base01}, 0.2);        /* surface-alt */
+                         background: alpha(#${colors.base01}, ${toString config.stylix.opacity.desktop});        /* surface-alt */
                          border-radius: 999px;                 /* pill shape */
                        /*  border: 1px solid #${colors.base03}; */  /* outline */
 
@@ -278,6 +313,9 @@
                        }
 
                        /* ===== Battery states ===== */
+                       #battery {
+                         background: transparent;
+                       }
 
                        #battery.charging,
                        #battery.plugged {
