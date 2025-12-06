@@ -26,6 +26,17 @@
         description = "Enable Xwayland support for Hyprland.";
       };
 
+monitor = mkOption {
+      type = types.str;
+      default = "eDP-1,1920x1080@60,0x0,1";
+      description = ''
+        Hyprland `monitor` line that will be used in the Home-Manager config.
+        Format: name,resolution@hz,pos,scale
+        Example: "eDP-1,2560x1440@165,0x0,1"
+      '';
+    };
+
+
       nvidia = {
         enable = mkEnableOption "Enable NVIDIA support (env + kernel toggles)";
         modesetting = mkOption {

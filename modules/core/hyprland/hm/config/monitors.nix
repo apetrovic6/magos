@@ -2,6 +2,7 @@
   flake.homeModules.hyprland-monitors = {
     config,
     lib,
+    osConfig,
     ...
   }: let
     inherit (lib) mkOption types;
@@ -15,9 +16,13 @@
       # Optimized for retina-class 2x displays, like 13" 2.8K, 27" 5K, 32" 6K.
       # env = "GDK_SCALE,1";
       # monitor = ",3840x2160@120, auto, 1";
+      # 
 
       env = "GDK_SCALE,1";
-      monitor = ",2560x1600@240, auto, 1.6";
+      monitor = osConfig.magos.core.hyprland.monitor;
+
+      # env = "GDK_SCALE,1";
+      # monitor = ",2560x1600@240, auto, 1.6";
 
       # monitor=,3840x2160@120, auto, 1, bitdepth, 10, cm, auto
 
