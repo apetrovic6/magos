@@ -1,4 +1,4 @@
-{...}: {
+{self, ...}: {
   flake.homeModules.hyprland-monitors = {
     config,
     lib,
@@ -18,11 +18,11 @@
       # monitor = ",3840x2160@120, auto, 1";
       # 
 
-      env = "GDK_SCALE,1";
-      monitor = osConfig.magos.core.hyprland.monitor;
-
       # env = "GDK_SCALE,1";
-      # monitor = ",2560x1600@240, auto, 1.6";
+      # monitor = osConfig.magos.core.hyprland.monitor;
+
+      env = "GDK_SCALE,1";
+      monitor = ",2560x1600@240, auto, 1.6";
 
       # monitor=,3840x2160@120, auto, 1, bitdepth, 10, cm, auto
 
