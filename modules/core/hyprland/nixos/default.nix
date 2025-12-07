@@ -18,6 +18,8 @@
     cfg = config.magos.core.hyprland;
     hypr = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system};
   in {
+
+    
     options.magos.core.hyprland = {
       enable = mkEnableOption "Enable Hyprland desktop";
       xwayland = mkOption {
@@ -28,7 +30,7 @@
 
 monitor = mkOption {
       type = types.str;
-      default = "eDP-1,1920x1080@60,0x0,1";
+      default = ",preferred,auto,1";
       description = ''
         Hyprland `monitor` line that will be used in the Home-Manager config.
         Format: name,resolution@hz,pos,scale
