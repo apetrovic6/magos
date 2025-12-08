@@ -9,8 +9,17 @@
       }: ''
         ${lib.concatStringsSep " " mods}, ${key}, ${desc},  exec, ${cmd}
       '';
-      mkSubmapBind = {
+
+      mkSubmap = {
+        mods ? ["ALT"],
         key,
+        name,
+      }: "${lib.concatStringsSep " " mods}, ${key}, submap, ${name}";
+
+      mkSubmapBind = {
+        type ? "bind",
+        key,
+        action ? "exec",
         cmd,
       }: ''
         bind = , ${key}, exec, ${cmd}
