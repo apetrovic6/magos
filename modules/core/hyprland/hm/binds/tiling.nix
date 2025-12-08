@@ -48,17 +48,17 @@
           "ALT SHIFT, TAB, Reveal active window on top, bringactivetotop"
 
           # Resize active window
-          "${modifier}, code:20, Expand window left, resizeactive, -100 0"
-          "${modifier}, code:21, Shrink window left, resizeactive, 100 0"
-          "${modifier} SHIFT, code:20, Shrink window up, resizeactive, 0 -100"
-          "${modifier} SHIFT, code:21, Expand window down, resizeactive, 0 100"
+          "${modifier} ALT, left, Expand window left, resizeactive, -100 0"
+          "${modifier} ALT, right, Shrink window left, resizeactive, 100 0"
+          "${modifier} ALT, up, Shrink window up, resizeactive, 0 -100"
+          "${modifier} ALT, down,Expand window down, resizeactive, 0 100"
 
           # Scroll through existing workspaces with ${modifier} + scroll
           "${modifier}, mouse_down, Scroll active workspace forward, workspace, e+1"
           "${modifier}, mouse_up, Scroll active workspace backward, workspace, e-1"
 
           # Toggle groups
-          "${modifier}, G, Toggle window grouping, togglegroup"
+          "${modifier} SHIFT, G, Toggle window grouping, togglegroup"
           "${modifier} ALT, G, Move active window out of group, moveoutofgroup"
 
           # Join groups

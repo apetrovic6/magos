@@ -29,8 +29,8 @@
             position = "top";
             height = 15;
             modules-left = ["custom/button" "hyprland/workspaces"];
-            modules-center = ["group/center" ];
-            modules-right = [ "group/audio" "group/connectivity" "hyprland/language"];
+            modules-center = ["group/center"];
+            modules-right = ["group/audio" "group/connectivity" "hyprland/language"];
 
             "hyprland/workspaces" = {
               on-click = "activate";
@@ -49,21 +49,19 @@
               };
             };
 
+            "group/audio" = {
+              orientation = "horizontal";
+              modules = ["wireplumber" "wireplumber#source"];
+            };
 
-          "group/audio" = {
-            orientation = "horizontal";
-            modules = ["wireplumber" "wireplumber#source"];
-
-          };
-            
             "group/connectivity" = {
-               orientation = "horizontal";
-               modules = [ "network" "bluetooth" "battery" ];
-             };
+              orientation = "horizontal";
+              modules = ["network" "bluetooth" "battery"];
+            };
 
             "group/center" = {
               orientation = "horizontal";
-              modules = [ "clock" "custom/notification" ];
+              modules = ["clock" "custom/notification"];
             };
 
             "custom/button" = {
@@ -145,19 +143,19 @@
               on-click = "ghostty --class=ghostty.wiremix -e ${lib.getExe pkgs.bluetui}";
             };
 
-            wireplumber= {
-                format = "{volume}% {icon} ";
-                format-muted= "";
-                on-click = "ghostty --class=ghostty.wiremix -e ${lib.getExe pkgs.wiremix}";
-                format-icons = ["" "" ""];
+            wireplumber = {
+              format = "{volume}% {icon} ";
+              format-muted = "";
+              on-click = "ghostty --class=ghostty.wiremix -e ${lib.getExe pkgs.wiremix}";
+              format-icons = ["" "" ""];
             };
 
-            "wireplumber#source"= {
-                node-type= "Audio/Source";
-                format= "{volume}% 󰍬";
-                format-muted= "󰍭";
-                   on-click-right= "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
-                scroll-step= 5;
+            "wireplumber#source" = {
+              node-type = "Audio/Source";
+              format = "{volume}% 󰍬";
+              format-muted = "󰍭";
+              on-click-right = "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
+              scroll-step = 5;
             };
 
             pulseaudio = {

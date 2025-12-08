@@ -18,8 +18,6 @@
     cfg = config.magos.core.hyprland;
     hypr = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system};
   in {
-
-    
     options.magos.core.hyprland = {
       enable = mkEnableOption "Enable Hyprland desktop";
       xwayland = mkOption {
@@ -28,16 +26,15 @@
         description = "Enable Xwayland support for Hyprland.";
       };
 
-monitor = mkOption {
-      type = types.str;
-      default = ",preferred,auto,1";
-      description = ''
-        Hyprland `monitor` line that will be used in the Home-Manager config.
-        Format: name,resolution@hz,pos,scale
-        Example: "eDP-1,2560x1440@165,0x0,1"
-      '';
-    };
-
+      monitor = mkOption {
+        type = types.str;
+        default = ",preferred,auto,1";
+        description = ''
+          Hyprland `monitor` line that will be used in the Home-Manager config.
+          Format: name,resolution@hz,pos,scale
+          Example: "eDP-1,2560x1440@165,0x0,1"
+        '';
+      };
 
       nvidia = {
         enable = mkEnableOption "Enable NVIDIA support (env + kernel toggles)";

@@ -11,9 +11,11 @@
       # add more modules here later (networking, hyprland, etc.)
     ];
 
+    networking.wireless.iwd.enable = true;
+
     # Optional soft defaults (easy to override without mkForce)
     # magos.stylix.polarity = lib.mkDefault "dark";
-    environment.systemPackages = with pkgs; [];
+    environment.systemPackages = with pkgs; [impala];
   };
 
   flake.homeManagerModules.default = {

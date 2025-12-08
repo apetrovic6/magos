@@ -54,7 +54,7 @@
 
           # Tabs
           "ctrl+t=new_tab"
-          "ctrl+w=close_tab"
+          "ctrl+shift+w=close_tab"
           "shift+left=next_tab"
           "shift+right=previous_tab"
         ];

@@ -87,14 +87,22 @@
         portalPackage = self.inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland;
 
         settings = {
-          windowrule = [
-            "float 1, center 1, size 875 600, match:class (ghostty.wiremix)"
-            "float 1, center 1, size 875 600, match:class (ghostty.bluetui)"
-            "float 1, center 1, size 875 600, match:class (ghostty.impala)"
+          windowrule = let
+            size = "size 875 700";
+          in [
+            "float 1, center 1, ${size}, match:class (ghostty.audio)"
+            "float 1, center 1, ${size}, match:class (ghostty.bluetooth)"
+            "float 1, center 1, ${size}, match:class (ghostty.wifi)"
+            "float 1, center 1, ${size}, match:class (ghostty.docker)"
+            "float 1, center 1, ${size}, match:class (ghostty.filemanager)"
+            "float 1, pin 1, size 500 300, match:title (Picture-in-Picture)"
+
+            "opacity ${toString config.stylix.opacity.applications}, match:title (.*hx.*)"
+            "opacity ${toString config.stylix.opacity.applications}, match:title (.*nvim.*)"
           ];
 
-          # Blur Walker’s layer surface (namespace is “walker”)
           layerrule = [
+            "match:class walker, blur 1, blur_popups 1, ignore_alpha 0.5"
             "match:class walker, blur 1, blur_popups 1, ignore_alpha 0.5"
             "match:class swaync-control-center, blur 1, blur_popups 1, ignore_alpha 0.5"
             "match:class swaync-notification-window, blur 1, blur_popups 1, ignore_alpha 0.5"

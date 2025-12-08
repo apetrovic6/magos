@@ -14,35 +14,152 @@
       terminal = getExe ghostty;
       passwordManager = getExe bitwarden-desktop;
       fileManager = getExe xfce.thunar;
-      cliFileManager = getExe yazi;
       messenger = getExe signal-desktop-bin;
+
+      mkWebapp = url: "${getExe brave} --profile-directory=\"Web Apps\" --app=${url}";
+
+      execTerminal = {
+        id,
+        exe,
+      }: ''
+        ${terminal} --class=ghostty.${id} -e ${exe}
+      '';
+
+      mkBind = {
+        mods ? ["${modifier}"],
+        key,
+        desc ? "",
+        command,
+      }: ''
+        ${lib.concatStringsSep " " mods}, ${key}, ${desc},  exec, ${command}
+      '';
     in {
       wayland.windowManager.hyprland.settings.bindd = [
-        # Walker
-        "${modifier}, SPACE, Launcher, exec, ${launcher}"
+        (mkBind {
+          key = "SPACE";
+          desc = "Launcher";
+          command = launcher;
+        })
 
-        "${modifier}, RETURN, Terminal, exec, ${terminal}"
-        "${modifier} SHIFT, F, File manager, exec, ${fileManager}"
-        "${modifier}, B, Web browser, exec, ${browser}"
+        (mkBind {
+          key = "RETURN";
+          desc = "Terminal";
+          command = terminal;
+        })
 
         # #"${modifier}, M, Music player, exec, ${music}"
 
-        "${modifier}, V, Messenger, exec, ${messenger}"
         "${modifier}, O, Obsidian, exec, ${obsidian} -disable-gpu"
         "${modifier}, SLASH, Password manager, exec, ${passwordManager}"
 
-        # # Terminal apps
-        "${modifier}, N, Neovim, exec, ${terminal} -e nvim"
-        "${modifier}, D, Lazy Docker, exec, ${terminal} -e lazydocker"
-        "${modifier}, F, Terminal File Manager, exec, ${terminal} -e ${cliFileManager}"
-
         # Hyprpanel
         # "${modifier} SHIFT, SPACE, Toggle Hyprpanel, exec, hyprpanel toggleWindow bar-0"
-        "${modifier} SHIFT, N, Notifications, exec, hyprpanel t notificationsmenu"
+        # "${modifier} SHIFT, N, Notifications, exec, hyprpanel t notificationsmenu"
 
-        "${modifier}, ESCAPE, Power Menu, exec, walker -m menus:power-menu"
-        "${modifier} SHIFT, N, Toggle SwayNC, exec, swaync-client -t"
-        "${modifier} SHIFT, SPACE, Toggle Waybar, exec, pkill -SIGUSR1 waybar"
-      ];
+        (mkBind {
+          mods = ["SUPER" "SHIFT"];
+          key = "F";
+          desc = "File Manager";
+          command = fileManager;
+        })
+
+        (mkBind {
+          key = "B";
+          desc = "Browser";
+          command = browser;
+        })
+
+        (mkBind {
+          key = "G";
+          desc = "Messenger";
+          command = messenger;
+        })
+
+        (mkBind {
+          key = "N";
+          desc = "Helix";
+          command = execTerminal {
+            id = "helix";
+            exe = "hx";
+          };
+        })
+
+        (mkBind {
+          key = "F";
+          desc = "Terminal File Manager";
+          command = execTerminal {
+            id = "filemanager";
+            exe = "${getExe pkgs.yazi}";
+          };
+        })
+
+        (mkBind {
+          key = "D";
+          desc = "Lazy Docker";
+          command = execTerminal {
+            id = "docker";
+            exe = "${getExe pkgs.lazydocker}";
+          };
+        })
+
+        (mkBind {
+          key = "ESCAPE";
+          desc = "Power Menu";
+          command = "walker -m menus:power-menu";
+        })
+
+        (mkBind {
+          mods = [modifier "SHIFT"];
+          key = "N";
+          desc = "Toggle SwayNC";
+          command = "swaync-client -t";
+        })
+
+        (mkBind {
+          mods = [modifier "SHIFT"];
+          key = "SPACE";
+          desc = "Toggle Waybar";
+          command = "pkill -SIGUSR1 waybar";
+        })
+
+        (mkBind {
+          key = "C";
+          desc = "Wireless Settings";
+          command = execTerminal {
+            id = "wifi";
+            exe = "${getExe pkgs.impala}";
+          };
+        })
+
+        (mkBind {
+          key = "I";
+          desc = "Bluetooth Control Panel";
+          command = execTerminal {
+            id = "bluetooth";
+            exe = "${getExe pkgs.bluetui}";
+          };
+        })
+
+        (mkBind {
+          key = "E";
+          desc = "Audio Control Panel";
+          command = execTerminal {
+            id = "audio";
+            exe = "${getExe pkgs.wiremix}";
+          };
+        })
+
+        (mkBind {
+          key = "A";
+          desc = "ChatGPT";
+          command = mkWebapp "https://chatgpt.com";
+        })
+
+        (mkBind {
+          mods = [];
+          key = "A";
+          desc = "ChatGPT";
+          command = mkWebapp "https://chatgpt.com";
+        })      ];
     };
 }

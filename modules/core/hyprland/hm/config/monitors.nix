@@ -6,23 +6,22 @@
     ...
   }: let
     inherit (lib) mkOption types;
-      hyprEnabled =
-        osConfig ? magos
-        && osConfig.magos ? core
-        && osConfig.magos.core ? hyprland
-        && osConfig.magos.core.hyprland ? enable
-        && osConfig.magos.core.hyprland.enable;
+    hyprEnabled =
+      osConfig ? magos
+      && osConfig.magos ? core
+      && osConfig.magos.core ? hyprland
+      && osConfig.magos.core.hyprland ? enable
+      && osConfig.magos.core.hyprland.enable;
 
-      hasHyprMonitor =
-        hyprEnabled
-        && osConfig.magos.core.hyprland ? monitor;
-     
-      monitorValue =
-    if hasHyprMonitor
-    then osConfig.magos.core.hyprland.monitor
-    else ",preferred,auto,1";
+    hasHyprMonitor =
+      hyprEnabled
+      && osConfig.magos.core.hyprland ? monitor;
+
+    monitorValue =
+      if hasHyprMonitor
+      then osConfig.magos.core.hyprland.monitor
+      else ",preferred,auto,1";
   in {
-
     wayland.windowManager.hyprland.settings = {
       # See https://wiki.hyprland.org/Configuring/Monitors/
       # List current monitors and resolutions possible: hyprctl monitors
@@ -32,11 +31,11 @@
       # Optimized for retina-class 2x displays, like 13" 2.8K, 27" 5K, 32" 6K.
       # env = "GDK_SCALE,1";
       # monitor = ",3840x2160@120, auto, 1";
-      # 
+      #
 
       env = "GDK_SCALE,1";
       monitor = [
-        monitorValue 
+        monitorValue
       ];
       # monitor = osConfig.core.hyprland.monitor;
 

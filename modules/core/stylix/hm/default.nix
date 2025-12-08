@@ -79,7 +79,48 @@
           enable = true;
           autoEnable = true;
 
+          # base16Scheme = {
+          #
+          # Everforest dark
+          #   base00 = "2b3339"; # Default Background
+          #   base01 = "323c41"; # Lighter Background (Used for status bars, line number and folding marks)
+          #   base02 = "503946"; # Selection Background
+          #   base03 = "868d80"; # Comments, Invisibles, Line Highlighting
+          #   base04 = "d3c6aa"; # Dark Foreground (Used for status bars)
+          #   base05 = "d3c6aa"; # Default Foreground, Caret, Delimiters, Operators
+          #   base06 = "e9e8d2"; # Light Foreground (Not often used)
+          #   base07 = "fff9e8"; # Light Background (Not often used)
+          #   base08 = "7fbbb3"; # Variables, XML Tags, Markup Link Text, Markup Lists, Diff Deleted
+          #   base09 = "d699b6"; # Integers, Boolean, Constants, XML Attributes, Markup Link Url
+          #   base0A = "83c092"; # Classes, Markup Bold, Search Text Background
+          #   base0B = "dbbc7f"; # Strings, Inherited Class, Markup Code, Diff Inserted
+          #   base0C = "e69875"; # Support, Regular Expressions, Escape Characters, Markup Quotes
+          #   base0D = "a7c080"; # Functions, Methods, Attribute IDs, Headings
+          #   base0E = "e67e80"; # Keywords, Storage, Selector, Markup Italic, Diff Changed
+          #   base0F = "d699b6"; # Deprecated, Opening/Closing Embedded Language Tags, e.g. <?php ?>
+
+          # Catppuccin frappe
+          #   base00 = "303446"; # base
+          #   base01 = "292c3c"; # mantle
+          #   base02 = "414559"; # surface0
+          #   base03 = "51576d"; # surface1
+          #   base04 = "626880"; # surface2
+          #   base05 = "c6d0f5"; # text
+          #   base06 = "f2d5cf"; # rosewater
+          #   base07 = "babbf1"; # lavender
+          #   base08 = "e78284"; # red
+          #   base09 = "ef9f76"; # peach
+          #   base0A = "e5c890"; # yellow
+          #   base0B = "a6d189"; # green
+          #   base0C = "81c8be"; # teal
+          #   base0D = "8caaee"; # blue
+          #   base0E = "ca9ee6"; # mauve
+          #   base0F = "eebebe"; # flamingo
+          # };
+
           polarity = cfg.polarity;
+
+          # base16Scheme = lib.mkForce "${pkgs.base16-schemes}/share/themes/gruvbox-dark-medium.yaml";
 
           opacity = cfg.opacity;
 
