@@ -7,7 +7,7 @@
   }:
     with pkgs; let
       inherit (lib) getExe;
-      inherit (self.lib.hyprland) mkBind mkSubmapBind mkWebapp;
+      inherit (self.lib.hyprland) mkBind mkSubmapBind;
       modifier = "SUPER";
 
       launcher = "walker -m desktopapplications";
@@ -152,7 +152,6 @@
         bind = [
           "ALT, R, submap, resize"
           "ALT, W, submap, web"
-          # escape to leave the resize submap
         ];
       };
 
@@ -166,18 +165,19 @@
         binde = , left,  resizeactive, -10 0
         binde = , up,    resizeactive, 0 -10
         binde = , down,  resizeactive, 0 10
+
+        # escape to leave the resize submap
         bind = , escape, submap, reset
+
         # Reset the submap, which will return to the global submap
         submap = reset
-        # --- end resize submap ---
-
 
         submap = web
 
         ${
           mkSubmapBind {
             key = "N";
-            cmd = mkWebapp "https://noogle.dev";
+            cmd = mkWebapp  "https://noogle.dev";
           }
         }
 
