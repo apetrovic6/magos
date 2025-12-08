@@ -156,6 +156,35 @@
             command = mkWebapp "https://chatgpt.com";
           })
         ];
+
+        bind = [
+          "ALT, R, submap, resize"
+          "ALT, W, submap, web"
+          # escape to leave the resize submap
+        ];
       };
+
+      wayland.windowManager.hyprland.extraConfig = ''
+        # --- resize submap ---
+        # Start a submap called "resize".
+        submap = resize
+
+        # Set repeatable binds for resizing the active window.
+        binde = , right, resizeactive, 10 0
+        binde = , left,  resizeactive, -10 0
+        binde = , up,    resizeactive, 0 -10
+        binde = , down,  resizeactive, 0 10
+        bind = , escape, submap, reset
+        # Reset the submap, which will return to the global submap
+        submap = reset
+        # --- end resize submap ---
+
+
+        submap = web
+
+        bind = , N, exec, ${mkWebapp "https://noogle.dev"}
+        bind = , N, submap, reset
+        submap = reset
+      '';
     };
 }
