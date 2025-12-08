@@ -49,7 +49,6 @@
         (import-tree ./modules)
         inputs.treefmt-nix.flakeModule
         inputs.home-manager.flakeModules.home-manager
-        ./lib/utils/merge-hm-modules.nix
       ];
       systems = ["x86_64-linux" "aarch64-linux"];
 
