@@ -111,6 +111,9 @@
           decoration = {
             rounding = 10;
 
+            inactive_opacity = (config.stylix.opacity.applications -0.01);
+            # active_opacity = config.stylix.opacity.applications;
+
             blur = {
               enabled = true;
               size = 10;

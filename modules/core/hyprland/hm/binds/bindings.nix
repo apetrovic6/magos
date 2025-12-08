@@ -186,6 +186,10 @@
           cmd = mkWebapp "https://noogle.dev";
         }}
 
+        ${mkSubmapBind {
+          key = "E";
+          cmd = mkWebapp "https://search.nixos.org";
+        }}
           ${mkSubmapBind {
           key = "M";
           cmd = mkWebapp "https://monkeytype.com";
