@@ -30,7 +30,7 @@
             height = 15;
             modules-left = ["custom/button" "hyprland/workspaces"];
             modules-center = ["group/center"];
-            modules-right = ["group/audio" "group/connectivity" "hyprland/language"];
+            modules-right = [ "tray" "group/audio" "group/connectivity" "hyprland/language"];
 
             "hyprland/workspaces" = {
               on-click = "activate";
@@ -48,7 +48,10 @@
                 "5" = [];
               };
             };
-
+tray= {
+    icon-size= 21;
+    spacing= 10;
+};
             "group/audio" = {
               orientation = "horizontal";
               modules = ["wireplumber" "wireplumber#source"];
@@ -258,6 +261,7 @@
                        #audio,
                        #tooltip,
                        #center,
+                       #tray,
                        #language {
                          padding: 3px 10px;
                          margin: 0px 15px;
