@@ -125,6 +125,12 @@
           })
 
           (mkBind {
+            mods = [modifier "SHIFT"];
+              key = "S";
+              cmd = "hyprshot -m region --freeze --raw | satty --filename -";
+          })
+
+          (mkBind {
             key = "I";
             desc = "Bluetooth Control Panel";
             cmd = execTerminal {

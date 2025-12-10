@@ -132,6 +132,8 @@
           hyprpanel
           # wf-recorder
           # grimblast
+          hyprshot
+          satty
           playerctl
           wireplumber
           wl-clipboard
