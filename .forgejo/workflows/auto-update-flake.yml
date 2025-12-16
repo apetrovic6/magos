@@ -32,7 +32,10 @@ jobs:
         uses: https://data.forgejo.org/actions/checkout@v4
         with:
           fetch-depth: 0
-
+      - name: Format Flake
+        run: |
+          nix fmt
+          
       - name: Update flake.lock
         id: update
         env:
