@@ -120,14 +120,14 @@
             desc = "Wireless Settings";
             cmd = execTerminal {
               id = "wifi";
-              exe = "${getExe pkgs.impala}";
+              exe = "${getExe' pkgs.impala "impala"}";
             };
           })
 
           (mkBind {
             mods = [modifier "SHIFT"];
-              key = "S";
-              cmd = "hyprshot -m region --freeze --raw | satty --filename -";
+            key = "S";
+            cmd = "hyprshot -m region --freeze --raw | satty --filename -";
           })
 
           (mkBind {

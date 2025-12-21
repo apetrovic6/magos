@@ -30,7 +30,7 @@
             height = 15;
             modules-left = ["custom/button" "hyprland/workspaces"];
             modules-center = ["group/center"];
-            modules-right = [ "tray" "group/audio" "group/connectivity" "hyprland/language"];
+            modules-right = ["tray" "group/audio" "group/connectivity" "hyprland/language"];
 
             "hyprland/workspaces" = {
               on-click = "activate";
@@ -48,10 +48,10 @@
                 "5" = [];
               };
             };
-tray= {
-    icon-size= 21;
-    spacing= 10;
-};
+            tray = {
+              icon-size = 21;
+              spacing = 10;
+            };
             "group/audio" = {
               orientation = "horizontal";
               modules = ["wireplumber" "wireplumber#source"];
@@ -114,7 +114,7 @@ tray= {
               tooltip-format-disconnected = "Disconnected";
               interval = 3;
               spacing = 1;
-              on-click = "ghostty --class=ghostty.wiremix  -e ${lib.getExe pkgs.impala}";
+              on-click = "ghostty --class=ghostty.wiremix  -e ${lib.getExe' pkgs.impala "impala"}";
             };
 
             battery = {
