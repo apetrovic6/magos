@@ -11,6 +11,7 @@
       # add more modules here later (networking, hyprland, etc.)
     ];
 
+    networking.wireless.enable =  lib.mkForce false;
     networking.wireless.iwd.enable = true;
 
     # Optional soft defaults (easy to override without mkForce)
