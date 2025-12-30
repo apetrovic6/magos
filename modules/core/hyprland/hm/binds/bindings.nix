@@ -6,16 +6,15 @@
     ...
   }:
     with pkgs; let
-      inherit (lib) getExe;
       inherit (self.lib.hyprland) mkBind mkSubmapBind mkSubmap;
       modifier = "SUPER";
 
       launcher = "walker -m desktopapplications";
-      browser = getExe librewolf;
-      terminal = getExe ghostty;
-      passwordManager = getExe bitwarden-desktop;
-      fileManager = getExe xfce.thunar;
-      messenger = getExe signal-desktop-bin;
+      browser = lib.getExe librewolf;
+      terminal = lib.getExe ghostty;
+      passwordManager = lib.getExe bitwarden-desktop;
+      fileManager = lib.getExe xfce.thunar;
+      messenger = lib.getExe signal-desktop-bin;
 
       mkWebapp = url: "${lib.getExe pkgs.brave} --profile-directory=\"Web Apps\" --app=${url}";
 
@@ -82,7 +81,7 @@
             desc = "Terminal File Manager";
             cmd = execTerminal {
               id = "filemanager";
-              exe = "${getExe pkgs.yazi}";
+              exe = "${lib.getExe pkgs.yazi}";
             };
           })
 
@@ -91,7 +90,7 @@
             desc = "Lazy Docker";
             cmd = execTerminal {
               id = "docker";
-              exe = "${getExe pkgs.lazydocker}";
+              exe = "${lib.getExe pkgs.lazydocker}";
             };
           })
 
@@ -120,7 +119,7 @@
             desc = "Wireless Settings";
             cmd = execTerminal {
               id = "wifi";
-              exe = "${getExe' pkgs.impala "impala"}";
+              exe = "${lib.getExe' pkgs.impala "impala"}";
             };
           })
 
@@ -135,7 +134,7 @@
             desc = "Bluetooth Control Panel";
             cmd = execTerminal {
               id = "bluetooth";
-              exe = "${getExe pkgs.bluetui}";
+              exe = "${lib.getExe pkgs.bluetui}";
             };
           })
 
@@ -144,7 +143,7 @@
             desc = "Audio Control Panel";
             cmd = execTerminal {
               id = "audio";
-              exe = "${getExe pkgs.wiremix}";
+              exe = "${lib.getExe pkgs.wiremix}";
             };
           })
 
