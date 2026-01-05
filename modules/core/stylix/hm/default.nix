@@ -133,15 +133,16 @@
             sizes = {
               applications = 10;
               terminal = 10;
-              desktop = 10;
-              popups = 10;
+              desktop = 12;
+              popups = 12;
             };
           };
 
           targets = {
+            noctalia-shell.enable = true;
             hyprpanel.enable = true;
             ghostty.enable = true;
-
+            k9s.enable = true;
             helix.enable = true;
 
             gtk = {

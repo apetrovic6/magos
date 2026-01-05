@@ -25,21 +25,24 @@
         systemd.enable = true;
 
         settings = {
-          settingsVersion = 25;
-          changelog.lastSeenVersion = "3.4.0-git";
+          # settingsVersion = 25;
+          # changelog.lastSeenVersion = "3.4.0-git";
 
-          wallpaper = {
-            enabled = true;
-            defaultWallpaper = lib.mkForce config.stylix.image;
-          };
+          # wallpaper = {
+          #   enabled = true;
+          #   defaultWallpaper = lib.mkForce config.stylix.image;
+          # };
           bar = {
-            density = "mini";
+            density = "default";
             position = "top";
-            floating = true;
+            floating = lib.mkForce true;
             marginVertical = 0.25;
-            opacity = config.stylix.opacity.desktop;
-            showCapsule = true;
 
+            # opacity = config.stylix.opacity.desktop;
+            showCapsule = true;
+            useSeparateOpacity = true;
+            
+            backgroundOpacity = lib.mkForce 0.0;
             widgets = {
               left = [
                 {
@@ -120,13 +123,13 @@
           };
 
           nightLight = {
-            enabled = false;
+            enabled = true;
             forced = false;
-            autoSchedule = true;
+            autoSchedule = false;
             nightTemp = "4000";
             dayTemp = "6500";
             manualSunrise = "06:30";
-            manualSunset = "18:30";
+            manualSunset = "20:00";
           };
 
           general = {};
@@ -135,10 +138,12 @@
           };
 
           ui = {
-            fontDefault = config.stylix.fonts.monospace.name;
-            fontFixed = config.stylix.fonts.monospace.name;
+            # fontDefault = config.stylix.fonts.monospace.name;
+            # fontFixed = config.stylix.fonts.monospace.name;
+            fontDefaultScale = 1;
+            fontFixedScale = 1;
             tooltipsEnabled = true;
-            panelBackgroundOpacity = 1;
+            # panelBackgroundOpacity = 0;
             panelsAttachedToBar = false;
             settingsPanelsAttachToBar = false;
           };
@@ -244,31 +249,31 @@
           };
         };
 
-        colors = {
-          # Semantic
-          mError = "#${config.lib.stylix.colors.base08}";
-          mOnError = "#${config.lib.stylix.colors.base00}";
+        # colors = {
+        #   # Semantic
+        #   mError = "#${config.lib.stylix.colors.base08}";
+        #   mOnError = "#${config.lib.stylix.colors.base00}";
 
-          # Accents
-          mPrimary = "#${config.lib.stylix.colors.base0D}";
-          mOnPrimary = "#${config.lib.stylix.colors.base00}";
-          mSecondary = "#${config.lib.stylix.colors.base0E}";
-          mOnSecondary = "#${config.lib.stylix.colors.base00}";
-          mTertiary = "#${config.lib.stylix.colors.base0B}";
-          mOnTertiary = "#${config.lib.stylix.colors.base00}";
+        #   # Accents
+        #   mPrimary = "#${config.lib.stylix.colors.base0D}";
+        #   mOnPrimary = "#${config.lib.stylix.colors.base00}";
+        #   mSecondary = "#${config.lib.stylix.colors.base0E}";
+        #   mOnSecondary = "#${config.lib.stylix.colors.base00}";
+        #   mTertiary = "#${config.lib.stylix.colors.base0B}";
+        #   mOnTertiary = "#${config.lib.stylix.colors.base00}";
 
-          # Surfaces
-          mSurface = "#${config.lib.stylix.colors.base00}";
-          mOnSurface = "#${config.lib.stylix.colors.base05}";
-          mSurfaceVariant = "#${config.lib.stylix.colors.base01}";
-          mOnSurfaceVariant = "#${config.lib.stylix.colors.base04}";
+        #   # Surfaces
+        #   mSurface = "#${config.lib.stylix.colors.base00}";
+        #   mOnSurface = "#${config.lib.stylix.colors.base05}";
+        #   mSurfaceVariant = "#${config.lib.stylix.colors.base01}";
+        #   mOnSurfaceVariant = "#${config.lib.stylix.colors.base04}";
 
-          # Hover & utilities
-          mHover = "#${config.lib.stylix.colors.base02}";
-          mOnHover = "#${config.lib.stylix.colors.base05}";
-          mOutline = "#${config.lib.stylix.colors.base03}";
-          mShadow = "#${config.lib.stylix.colors.base00}";
-        };
+        #   # Hover & utilities
+        #   mHover = "#${config.lib.stylix.colors.base02}";
+        #   mOnHover = "#${config.lib.stylix.colors.base05}";
+        #   mOutline = "#${config.lib.stylix.colors.base03}";
+        #   mShadow = "#${config.lib.stylix.colors.base00}";
+        # };
       };
     };
   };
