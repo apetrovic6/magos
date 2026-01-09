@@ -6,6 +6,7 @@
     ...
   }: let
     cfg = config.magos.hm.core.hypridle;
+    lockCommand = "noctalia-shell ipc call lockScreen lock";
   in {
     options.magos.hm.core.hypridle = {
       enable = lib.mkEnableOption "Enable Hypridle with sane defaults";
@@ -39,7 +40,8 @@
 
         settings = {
           general = {
-            lock_cmd = "pidof hyprlock || hyprlock";
+            # lock_cmd = "pidof hyprlock || hyprlock";
+            lock_cmd = lockCommand;
             before_sleep_cmd = "loginctl lock-session";
             after_sleep_cmd = "hyprctl dispatch dpms on";
           };
