@@ -210,7 +210,7 @@
                   <style>
                     <class name="box-wrapper"></class>
                   </style>
-                  <property name="width-request">500</property>
+                  <property name="width-request">400</property>
                   <property name="overflow">hidden</property>
                   <property name="orientation">horizontal</property>
                   <property name="valign">center</property>
@@ -283,7 +283,7 @@
                               <property name="hexpand">true</property>
                               <property name="can_focus">false</property>
                               <property name="overlay-scrolling">true</property>
-                              <property name="max-content-width">500</property>
+                              <property name="max-content-width">400</property>
                               <property name="max-content-height">400</property>
                               <property name="min-content-height">0</property>
                               <property name="propagate-natural-height">true</property>
@@ -380,7 +380,7 @@
                   <style>
                     <class name="box-wrapper"></class>
                   </style>
-                  <property name="width-request">500</property>
+                  <property name="width-request">400</property>
                   <property name="overflow">hidden</property>
                   <property name="orientation">horizontal</property>
                   <property name="valign">center</property>
@@ -453,7 +453,7 @@
                               <property name="hexpand">true</property>
                               <property name="can_focus">false</property>
                               <property name="overlay-scrolling">true</property>
-                              <property name="max-content-width">500</property>
+                              <property name="max-content-width">400</property>
                               <property name="max-content-height">400</property>
                               <property name="min-content-height">0</property>
                               <property name="propagate-natural-height">true</property>

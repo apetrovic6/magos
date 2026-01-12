@@ -97,7 +97,7 @@
           (mkBind {
             key = "ESCAPE";
             desc = "Power Menu";
-            cmd = "walker -m menus:power-menu --width 500 --height 400";
+            cmd = "walker -m menus:power-menu --width 400 --height 400";
           })
 
           (mkBind {
