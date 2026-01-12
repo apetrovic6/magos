@@ -41,7 +41,7 @@
             # opacity = config.stylix.opacity.desktop;
             showCapsule = true;
             useSeparateOpacity = true;
-            
+
             backgroundOpacity = lib.mkForce 0.0;
             widgets = {
               left = [
