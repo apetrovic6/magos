@@ -101,6 +101,13 @@
           })
 
           (mkBind {
+            key = "P";
+            mods = [modifier "SHIFT"];
+            desc = "Resolution Picker";
+            cmd = "hypr-resolution-picker";
+          })
+
+          (mkBind {
             mods = [modifier "SHIFT"];
             key = "N";
             desc = "Toggle SwayNC";

@@ -15,6 +15,7 @@
       self.homeModules.walker-bugala
       inputs.walker.homeManagerModules.default
       self.homeModules.walker-menus
+      self.homeModules.walker-resolution-menu
     ];
     options.magos.hm.core.walker.enable = mkEnableOption "Enable and setup Walker";
 
