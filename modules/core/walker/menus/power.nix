@@ -20,7 +20,7 @@
 
       [[entries]]
       text = "Suspend"
-      icon = "system-sleep"
+      icon = "system-suspend"
       value = "systemctl suspend"
 
       [[entries]]

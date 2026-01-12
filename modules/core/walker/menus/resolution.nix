@@ -80,7 +80,7 @@
       fi
 
       # Use walker in dmenu mode to select resolution
-      selected=$(echo "$resolutions" | ${pkgs.walker}/bin/walker --dmenu)
+      selected=$(echo "$resolutions" | ${pkgs.walker}/bin/walker --dmenu --width 500 --height 400)
 
       if [ -n "$selected" ]; then
         ${resolutionApplyScript}/bin/walker-resolution-apply "$selected"
