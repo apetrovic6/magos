@@ -23,6 +23,12 @@
         description = "Optional wallpaper path for Stylix.";
       };
 
+      base16Scheme = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Name of the base16 scheme from https://github.com/tinted-theming/schemes/tree/spec-0.11/base16";
+      };
+
       polarity = mkOption {
         type = types.enum ["light" "dark"];
         default = "dark";
@@ -35,6 +41,7 @@
         {
           enable = true;
           polarity = cfg.polarity;
+          # base16Scheme = mkIf cfg.base16Scheme.
 
           opacity = {
             terminal = 0.8;
@@ -76,6 +83,9 @@
         }
         // optionalAttrs (cfg.image != null) {
           image = cfg.image;
+        }
+        // optionalAttrs (cfg.base16Scheme != null) {
+          base16Scheme = "${pkgs.base16-schemes}/share/themes/${cfg.base16Scheme}.yaml";
         };
     };
   };
