@@ -14,7 +14,7 @@
       terminal = lib.getExe ghostty;
       passwordManager = lib.getExe bitwarden-desktop;
       fileManager = lib.getExe xfce.thunar;
-      messenger = lib.getExe signal-desktop-bin;
+      messenger = "signal";
 
       mkWebapp = url: "${lib.getExe pkgs.brave} --profile-directory=\"Web Apps\" --app=${url}";
 
