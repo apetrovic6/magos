@@ -35,12 +35,31 @@
     treefmt-nix.url = "github:numtide/treefmt-nix";
   };
 
-  outputs = inputs @ {flake-parts, import-tree, ...}: flake-parts.lib.mkFlake {inherit inputs; } {
+  outputs = inputs @ {
+    self,
+    flake-parts,
+    import-tree,
+    ...
+  }:
+    flake-parts.lib.mkFlake {inherit inputs;} {
       imports = [
         (import-tree ./modules)
         inputs.treefmt-nix.flakeModule
         inputs.home-manager.flakeModules.home-manager
       ];
+
+      flake.nixosModules.default = {
+        pkgs,
+        lib,
+        config,
+        ...
+      }: {
+        imports = [
+          self.nixosModules.stylix
+        ];
+
+        magos.stylix.enable = true;
+      };
 
       perSystem = {
         config,

@@ -29,21 +29,20 @@
         # ];
 
         # xwayland-sattelite.path = lib.getExe pkgs.xwayland-satellite;
-
         extraConfig = ''
           prefer-no-csd
         '';
 
         input = {
-          focus-follows-mouse = _: {} ;
+          focus-follows-mouse = _: {};
 
           keyboard = {
             xkb.layout = "us,hr";
           };
 
           touchpad = {
-            natural-scroll = _: {} ;
-            tap = _: {} ;
+            natural-scroll = _: {};
+            tap = _: {};
           };
 
           mouse = {
@@ -56,32 +55,68 @@
         binds = let
           super = "Mod";
 
-        directions = [
-          { key = "H"; action = "column"; direction = "left"; }
-          { key = "L"; action = "column"; direction = "right"; }
-          { key = "K"; action = "window"; direction = "up"; }
-          { key = "J"; action = "window"; direction = "down"; }
-        ];
+          directions = [
+            {
+              key = "H";
+              type = "column";
+              direction = "left";
+            }
+            {
+              key = "L";
+              type = "column";
+              direction = "right";
+            }
+            {
+              key = "K";
+              type = "window";
+              direction = "up";
+            }
+            {
+              key = "J";
+              type = "window";
+              direction = "down";
+            }
+          ];
 
-          moveFocusArrows = lib.map (x: lib.nameValuePair "${super}+${lib.toSentenceCase x.direction}" { "focus-${x.action}-${x.direction}" = _: {} ;}) directions;
-          moveFocusKeys= lib.map (x: lib.nameValuePair "${super}+${lib.toSentenceCase x.key}" { "focus-${x.action}-${x.direction}" = _: {};}) directions;
+          verbs = [
+            {
+              modifier = super;
+              verb = "focus";
+            }
+            {
+              modifier = "${super}+Shift";
+              verb = "move";
+            }
+          ];
 
-                    
-          
-        in {
-          "${super}+return".spawn-sh = lib.getExe pkgs.foot;
-          "${super}+Q".close-window = _: {} ;
+          directionalBinds = lib.listToAttrs (lib.concatMap (
+              v:
+                lib.concatMap (x: [
+                  (lib.nameValuePair "${v.modifier}+${lib.toSentenceCase x.direction}" {"${v.verb}-${x.type}-${x.direction}" = _: {};})
+                  (lib.nameValuePair "${v.modifier}+${x.key}" {"${v.verb}-${x.type}-${x.direction}" = _: {};})
+                ])
+                directions
+            )
+            verbs);
+
+          workspaceBinds = lib.listToAttrs (lib.concatMap (n: [
+            (lib.nameValuePair "${super}+${toString n}" {focus-workspace = n;})
+            (lib.nameValuePair "${super}+Shift+${toString n}" {move-column-to-workspace = n;})
+          ]) (lib.range 0 9));
+        in
+          {
+            "${super}+return".spawn-sh = lib.getExe pkgs.foot;
+            "${super}+Q".close-window = _: {};
+            "${super}+F".maximize-column = _:{};
+            "${super}+G".fullscreen-column = _:{};
+            "${super}+T".toggle-window-floating= _:{};
+            "${super}+C".center-column = _:{};
+          }
+          // directionalBinds
+          // workspaceBinds;
 
 
-        }
-          // lib.listToAttrs moveFocusArrows
-          // lib.listToAttrs moveFocusKeys
-          
-            
-
-          
-          
-          ;
+        
       };
     };
   };
