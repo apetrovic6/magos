@@ -105,7 +105,8 @@
           ]) (lib.range 0 9));
         in
           {
-            "${super}+return".spawn-sh = lib.getExe pkgs.foot;
+            "${super}+return".spawn-sh = lib.getExe (lib.getExe self'.packages.${pkgs.stdenv.hostPlatform.system}.foot);
+            "${super}+B".spawn-sh = "librewolf";
             "${super}+Q".close-window = _: {};
             "${super}+F".maximize-column = _:{};
             "${super}+G".fullscreen-column = _:{};
