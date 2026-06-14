@@ -24,9 +24,9 @@
       inherit pkgs;
 
       settings = {
-        # spawn-at-stratup = [
-        #   (lib.getExe self'.packages.${pkgs.stdenv.hostPlatform.system}.noctalia)
-        # ];
+        spawn-at-startup = [
+          (lib.getExe self'.packages.noctalia)
+        ];
 
         # xwayland-sattelite.path = lib.getExe pkgs.xwayland-satellite;
         extraConfig = ''
@@ -35,7 +35,6 @@
 
         input = {
           focus-follows-mouse = _: {};
-
           keyboard = {
             xkb.layout = "us,hr";
           };
@@ -50,7 +49,21 @@
           };
         };
 
-        layout.gaps = 5;
+        layout.gaps = 10;
+
+        focus-ring = {
+          width = 1.5;
+
+          active-color = "";
+          inactive-color = "";
+        };
+
+
+        border = {
+          width = 1.5;
+          active-color = "";
+          inactive-color = "";
+        };
 
         binds = let
           super = "Mod";
@@ -105,19 +118,34 @@
           ]) (lib.range 0 9));
         in
           {
-            "${super}+return".spawn-sh = lib.getExe (lib.getExe self'.packages.${pkgs.stdenv.hostPlatform.system}.foot);
+            "${super}+Shift+Slash".show-hotkey-overlay = _: {};
+
+            "${super}+return" = _: {
+              props.hotkey-overlay-title = "Spawn Terminal";
+              content.spawn-sh = lib.getExe self'.packages.foot;
+            };
+
             "${super}+B".spawn-sh = "librewolf";
             "${super}+Q".close-window = _: {};
-            "${super}+F".maximize-column = _:{};
-            "${super}+G".fullscreen-column = _:{};
-            "${super}+T".toggle-window-floating= _:{};
-            "${super}+C".center-column = _:{};
+            "${super}+F".maximize-column = _: {};
+            # "${super}+G".fullscreen-column = _:{};
+            "${super}+T".toggle-window-floating = _: {};
+            "${super}+C".center-column = _: {};
+
+            "XF86AudioRaiseVolume".spawn = ["wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.1+"];
+            "XF86AudioLowerVolume".spawn = ["wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.1-"];
+            "XF86AudioMute".spawn = ["wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"];
+            "XF86AudioMicMute".spawn = ["wpctl" "set-mute" "@DEFAULT_AUDIO_SOURCE@" "toggle"];
+
+            # "XF86MonBrightnessUp".spawn = ["brightnessctl" "set" "1%+"];
+            # "XF86MonBrightnessDown".spawn = ["brightnessctl" "set" "1%-"];
+
+            # Brightness
+            "XF86MonBrightnessUp".spawn = ["brightnessctl" "-d" "intel_backlight" "set" "5%+"];
+            "XF86MonBrightnessDown".spawn = ["brightnessctl" "-d" "intel_backlight" "set" "5%-"];
           }
           // directionalBinds
           // workspaceBinds;
-
-
-        
       };
     };
   };
