@@ -43,12 +43,13 @@ in {
     makeNoctaliaPackage = {
       pkgs,
       colors,
+      wallpaper ? null,
     }: let
       noctaliaPkg = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
       configDir = pkgs.runCommand "noctalia-config" {} ''
-        mkdir -p $out/noctalia
-        cp ${pkgs.writeText "colors.json" (builtins.toJSON (base16ToMaterial colors))} $out/noctalia/colors.json
+        mkdir -p $out/noctalia/palettes
+        cp ${pkgs.writeText "custom.json" (builtins.toJSON (base16ToMaterial colors))} $out/noctalia/palettes/custom.json
         cp ${pkgs.writeText "noctalia.toml" ''
           [bar.default]
           position = "top"
@@ -65,13 +66,21 @@ in {
 
           [theme]
           mode = "dark"
-          source = "community"
+          source = "custom"
           builtin = "Gruvbox"
           community_palette = "Everforest"
-          # custom_palette = "custom"
+          custom_palette = "custom"
+          
           
           [dock]
           enabled = false
+
+          [launcher]
+          enabled = true
+
+          [lockscreen]
+          enabled = true
+          ${if wallpaper != null then ''wallpaper = "${wallpaper}"'' else ""}
         ''} $out/noctalia/noctalia.toml
       '';
     in
