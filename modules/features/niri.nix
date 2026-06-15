@@ -12,8 +12,9 @@
     terminalPkg,
     noctaliaPkg,
     wallpaper ? null,
+    cursor ? null,
   }: let
-    super = "Mod";
+    super = "Super";
 
     directions = [
       {
@@ -97,6 +98,8 @@
     layout = {
       gaps = 8;
 
+      # default-column-width = {proportion = 1.0;};
+
       focus-ring = {
         width = 1;
         active-color = "#${colors.base0D}";
@@ -117,18 +120,26 @@
         "${super}+Shift+Slash".show-hotkey-overlay = _: {};
         "${super}+Shift+Space".switch-layout = "next";
         "${super}+Shift+M".quit = _: {};
-        "${super}+Space".spawn-sh = "${lib.getExe noctaliaPkg} ipc call launcher toggle";
+        "${super}+Space".spawn-sh = "${lib.getExe noctaliaPkg} msg panel-toggle launcher";
 
         "${super}+return" = _: {
           props.hotkey-overlay-title = "Spawn Terminal";
           content.spawn-sh = lib.getExe terminalPkg;
         };
 
+        "${super}+Escape".spawn-sh = "${lib.getExe noctaliaPkg} msg session lock";
+
         "${super}+B".spawn-sh = "librewolf";
         "${super}+Q".close-window = _: {};
         "${super}+F".maximize-column = _: {};
+        "${super}+R".switch-preset-column-width = _: {};
         "${super}+T".toggle-window-floating = _: {};
         "${super}+C".center-column = _: {};
+        "${super}+Comma".consume-window-into-column = _: {};
+        "${super}+Period".expel-window-from-column = _: {};
+
+        "${super}+Ctrl+S".spawn-sh = "grim -g \"$(slurp)\" - | satty --filename -";
+        "${super}+Ctrl+Shift+S".spawn-sh = "grim - | satty --filename -";
 
         "XF86AudioRaiseVolume".spawn = ["wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.1+"];
         "XF86AudioLowerVolume".spawn = ["wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.1-"];
@@ -140,6 +151,11 @@
       }
       // directionalBinds
       // workspaceBinds;
+  } // lib.optionalAttrs (cursor != null) {
+    cursor = {
+      xcursor-theme = cursor.name;
+      xcursor-size = cursor.size;
+    };
   };
 in {
   flake.nixosModules.niri = {
@@ -152,6 +168,8 @@ in {
     colors = config.lib.stylix.colors or defaultTheme;
     pkg = self.packages.${system};
   in {
+    environment.systemPackages = with pkgs; [grim slurp satty];
+
     programs.niri = {
       enable = true;
       package = inputs.wrapper-modules.wrappers.niri.wrap {
@@ -159,8 +177,12 @@ in {
         settings = makeSettings {
           inherit pkgs lib colors;
           terminalPkg = pkg.foot;
-          noctaliaPkg = self.lib.makeNoctaliaPackage {inherit pkgs colors;};
+          noctaliaPkg = self.lib.makeNoctaliaPackage {
+            inherit pkgs colors;
+            wallpaper = config.stylix.image or null;
+          };
           wallpaper = config.stylix.image or null;
+          cursor = config.stylix.cursor or null;
         };
       };
     };
