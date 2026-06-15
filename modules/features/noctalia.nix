@@ -1,11 +1,7 @@
-{self, inputs, ...}: {
+{self, ...}: let
+  defaultTheme = self.lib.colors.everforest-dark-soft;
+in {
   perSystem = {pkgs, ...}: {
-    packages.noctalia = inputs.wrapper-modules.wrappers.noctalia-shell.wrap {
-      inherit pkgs;
-
-      settings = {
-        
-      };
-    };
+    packages.noctalia = self.lib.makeNoctaliaPackage {inherit pkgs; colors = defaultTheme;};
   };
 }

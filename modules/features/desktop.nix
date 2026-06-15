@@ -3,6 +3,7 @@
 {
        imports = [
          self.nixosModules.niri
+         self.nixosModules.stylix
        ];
   };
 }
