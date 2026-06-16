@@ -13,6 +13,7 @@
     noctaliaPkg,
     wallpaper ? null,
     cursor ? null,
+    outputs ? {},
   }: let
     super = "Super";
 
@@ -64,99 +65,161 @@
       (lib.nameValuePair "${super}+${toString n}" {focus-workspace = n;})
       (lib.nameValuePair "${super}+Shift+${toString n}" {move-column-to-workspace = n;})
     ]) (lib.range 0 9));
-  in {
-    spawn-at-startup =
-      [(lib.getExe noctaliaPkg)]
-      ++ lib.optional (wallpaper != null) ["${pkgs.swaybg}/bin/swaybg" "-i" "${wallpaper}" "-m" "fill"];
+  in
+    {
+      spawn-at-startup =
+        [
+          (lib.getExe noctaliaPkg)
+          "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"
+          [
+            "${pkgs.bash}/bin/sh"
+            "-c"
+            "systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP && systemctl --user restart xdg-desktop-portal.service xdg-desktop-portal-gnome.service xdg-desktop-portal-wlr.service"
+          ]
+        ]
+        ++ lib.optional (wallpaper != null) ["${pkgs.swaybg}/bin/swaybg" "-i" "${wallpaper}" "-m" "fill"];
 
-    xwayland-satellite.path = lib.getExe pkgs.xwayland-satellite;
+      xwayland-satellite.path = lib.getExe pkgs.xwayland-satellite;
 
-    extraConfig = ''
-      prefer-no-csd
-    '';
+      extraConfig = ''
+        prefer-no-csd
+      '';
 
-    input = {
-      focus-follows-mouse = _: {};
-      keyboard = {
-        xkb.layout = "us,hr";
-      };
-
-      touchpad = {
-        natural-scroll = _: {};
-        tap = _: {};
-      };
-
-      mouse = {
-        accel-profile = "flat";
-      };
-    };
-
-    hotkey-overlay = {
-      skip-at-startup = _: {};
-    };
-
-    layout = {
-      gaps = 8;
-
-      # default-column-width = {proportion = 1.0;};
-
-      focus-ring = {
-        width = 1;
-        active-color = "#${colors.base0D}";
-        inactive-color = "#${colors.base03}";
-      };
-
-      border = {
-        width = 1;
-        active-color = "#${colors.base0D}";
-        inactive-color = "#${colors.base03}";
-      };
-    };
-
-    screenshot-path = null;
-
-    binds =
-      {
-        "${super}+Shift+Slash".show-hotkey-overlay = _: {};
-        "${super}+Shift+Space".switch-layout = "next";
-        "${super}+Shift+M".quit = _: {};
-        "${super}+Space".spawn-sh = "${lib.getExe noctaliaPkg} msg panel-toggle launcher";
-
-        "${super}+return" = _: {
-          props.hotkey-overlay-title = "Spawn Terminal";
-          content.spawn-sh = lib.getExe terminalPkg;
+      input = {
+        focus-follows-mouse = _: {};
+        keyboard = {
+          xkb.layout = "us,hr";
         };
 
-        "${super}+Escape".spawn-sh = "${lib.getExe noctaliaPkg} msg session lock";
+        touchpad = {
+          natural-scroll = _: {};
+          tap = _: {};
+        };
 
-        "${super}+B".spawn-sh = "librewolf";
-        "${super}+Q".close-window = _: {};
-        "${super}+F".maximize-column = _: {};
-        "${super}+R".switch-preset-column-width = _: {};
-        "${super}+T".toggle-window-floating = _: {};
-        "${super}+C".center-column = _: {};
-        "${super}+Comma".consume-window-into-column = _: {};
-        "${super}+Period".expel-window-from-column = _: {};
+        mouse = {
+          accel-profile = "flat";
+        };
+      };
 
-        "${super}+Ctrl+S".spawn-sh = "grim -g \"$(slurp)\" - | satty --filename -";
-        "${super}+Ctrl+Shift+S".spawn-sh = "grim - | satty --filename -";
+      hotkey-overlay = {
+        skip-at-startup = _: {};
+      };
 
-        "XF86AudioRaiseVolume".spawn = ["wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.1+"];
-        "XF86AudioLowerVolume".spawn = ["wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.1-"];
-        "XF86AudioMute".spawn = ["wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"];
-        "XF86AudioMicMute".spawn = ["wpctl" "set-mute" "@DEFAULT_AUDIO_SOURCE@" "toggle"];
+      layout = {
+        gaps = 8;
 
-        "XF86MonBrightnessUp".spawn = ["brightnessctl" "-d" "intel_backlight" "set" "5%+"];
-        "XF86MonBrightnessDown".spawn = ["brightnessctl" "-d" "intel_backlight" "set" "5%-"];
-      }
-      // directionalBinds
-      // workspaceBinds;
-  } // lib.optionalAttrs (cursor != null) {
-    cursor = {
-      xcursor-theme = cursor.name;
-      xcursor-size = cursor.size;
+        # default-column-width = {proportion = 1.0;};
+
+        focus-ring = {
+          width = 1;
+          active-color = "#${colors.base0D}";
+          inactive-color = "#${colors.base03}";
+        };
+
+        border = {
+          width = 1.5;
+          active-color = "#${colors.base0D}";
+          inactive-color = "#${colors.base03}";
+        };
+      };
+
+      screenshot-path = null;
+
+      binds =
+        {
+          "${super}+Shift+Slash".show-hotkey-overlay = _: {};
+          "${super}+Shift+Space".switch-layout = "next";
+          "${super}+Shift+M".quit = _: {};
+          "${super}+Space" = _: {
+            props.hotkey-overlay-title = "Toggle Launcher";
+            content.spawn-sh = "${lib.getExe noctaliaPkg} msg panel-toggle launcher";
+          };
+          "${super}+N".spawn-sh = "${lib.getExe noctaliaPkg} msg panel-toggle control-center";
+
+          "${super}+return" = _: {
+            props.hotkey-overlay-title = "Spawn Terminal";
+            content.spawn-sh = lib.getExe terminalPkg;
+          };
+
+          "${super}+Escape" = _: {
+            props.hotkey-overlay-title = "Session Control";
+            content.spawn-sh = "${lib.getExe noctaliaPkg} msg panel-toggle session;";
+          };
+
+          "${super}+B".spawn-sh = "librewolf";
+          "${super}+O".toggle-overview = _: {};
+          "${super}+Q".close-window = _: {};
+          "${super}+F".maximize-column = _: {};
+          "${super}+R".switch-preset-column-width = _: {};
+          "${super}+T".toggle-window-floating = _: {};
+          "${super}+C".center-column = _: {};
+          "${super}+Comma".consume-window-into-column = _: {};
+          "${super}+Period".expel-window-from-column = _: {};
+
+          "${super}+E" = _: {
+            props.hotkey-overlay-title = "Audio Mixer";
+            content.spawn = ["${lib.getExe terminalPkg}" "--app-id" "foot-floating" "-e" "${lib.getExe pkgs.wiremix}"];
+          };
+
+          # "${super}+A".spawn = ["${lib.getExe terminalPkg}" "--app-id" "foot-floating" "-e" "${lib.getExe pkgs.impala}"];
+          "${super}+I" = _: {
+            props.hotkey-overlay-title = "Bluetooth";
+            content.spawn = ["${lib.getExe terminalPkg}" "--app-id" "foot-floating" "-e" "${lib.getExe pkgs.bluetui}"];
+          };
+
+          "${super}+Ctrl+S" = _: {
+            props.hotkey-overlay-title = "Screenshot Area";
+            content.spawn-sh = "${lib.getExe pkgs.grim} -g \"$(${lib.getExe pkgs.slurp})\" - | ${lib.getExe pkgs.satty} --filename -";
+          };
+
+          "${super}+Ctrl+Shift+S" = _: {
+            props.hotkey-overlay-title = "Screenshot Screen";
+            content.spawn-sh = "${lib.getExe pkgs.grim} - | ${lib.getExe pkgs.satty} --filename -";
+          };
+
+          "XF86AudioRaiseVolume".spawn = ["wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.1+"];
+          "XF86AudioLowerVolume".spawn = ["wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.1-"];
+          "XF86AudioMute".spawn = ["wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"];
+          "XF86AudioMicMute".spawn = ["wpctl" "set-mute" "@DEFAULT_AUDIO_SOURCE@" "toggle"];
+
+          "XF86MonBrightnessUp".spawn = ["brightnessctl" "-d" "intel_backlight" "set" "5%+"];
+          "XF86MonBrightnessDown".spawn = ["brightnessctl" "-d" "intel_backlight" "set" "5%-"];
+        }
+        // directionalBinds
+        // workspaceBinds;
+
+      window-rules = [
+        {
+          matches = [{title = "^Picture.in.Picture$";}];
+          open-floating = true;
+          open-focused = false;
+        }
+        {
+          matches = [
+            {app-id = "^nm-connection-editor$";}
+            {app-id = "^pavucontrol$";}
+            {app-id = "^blueman-manager$";}
+            {app-id = "^foot-floating$";}
+          ];
+          open-floating = true;
+        }
+        {
+          matches = [
+            {app-id = "^com.bitwarden.desktop$";}
+          ];
+          block-out-from = "screen-capture";
+        }
+      ];
+    }
+    // lib.optionalAttrs (cursor != null) {
+      cursor = {
+        xcursor-theme = cursor.name;
+        xcursor-size = cursor.size;
+      };
+    }
+    // lib.optionalAttrs (outputs != {}) {
+      inherit outputs;
     };
-  };
 in {
   flake.nixosModules.niri = {
     pkgs,
@@ -167,22 +230,41 @@ in {
     system = pkgs.stdenv.hostPlatform.system;
     colors = config.lib.stylix.colors or defaultTheme;
     pkg = self.packages.${system};
+    cfg = config.magos.niri;
   in {
-    environment.systemPackages = with pkgs; [grim slurp satty];
+    options.magos.niri.outputs = lib.mkOption {
+      type = lib.types.attrsOf (lib.types.attrsOf lib.types.anything);
+      default = {};
+      description = "Per-output niri settings keyed by output name (e.g. scale, mode).";
+    };
 
-    programs.niri = {
-      enable = true;
-      package = inputs.wrapper-modules.wrappers.niri.wrap {
-        inherit pkgs;
-        settings = makeSettings {
-          inherit pkgs lib colors;
-          terminalPkg = pkg.foot;
-          noctaliaPkg = self.lib.makeNoctaliaPackage {
-            inherit pkgs colors;
+    config = {
+      xdg.portal = {
+        enable = true;
+        extraPortals = [pkgs.xdg-desktop-portal-gnome pkgs.xdg-desktop-portal-wlr];
+        config.niri = {
+          "org.freedesktop.impl.portal.ScreenCast" = ["gnome"];
+          "org.freedesktop.impl.portal.Screenshot" = ["wlr"];
+        };
+      };
+
+      services.gnome.gnome-keyring.enable = true;
+
+      programs.niri = {
+        enable = true;
+        package = inputs.wrapper-modules.wrappers.niri.wrap {
+          inherit pkgs;
+          settings = makeSettings {
+            inherit pkgs lib colors;
+            terminalPkg = pkg.foot;
+            noctaliaPkg = self.lib.makeNoctaliaPackage {
+              inherit pkgs colors;
+              wallpaper = config.stylix.image or null;
+            };
             wallpaper = config.stylix.image or null;
+            cursor = config.stylix.cursor or null;
+            outputs = cfg.outputs;
           };
-          wallpaper = config.stylix.image or null;
-          cursor = config.stylix.cursor or null;
         };
       };
     };
