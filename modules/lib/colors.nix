@@ -66,7 +66,7 @@ in {
 
           [theme]
           mode = "dark"
-          source = "custom"
+          source = "community"
           builtin = "Gruvbox"
           community_palette = "Everforest"
           custom_palette = "custom"
@@ -81,6 +81,18 @@ in {
           [lockscreen]
           enabled = true
           ${if wallpaper != null then ''wallpaper = "${wallpaper}"'' else ""}
+
+          [idle.behavior.lock]
+          timeout = 600
+          command = "noctalia:session lock"
+          enabled = true
+
+          [idle.behavior.screen-off]
+          timeout = 660
+          command = "noctalia:dpms-off"
+          resume_command = "noctalia:dpms-on"
+          enabled = true
+          
         ''} $out/noctalia/noctalia.toml
       '';
     in
