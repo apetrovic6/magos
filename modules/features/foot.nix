@@ -12,7 +12,10 @@
     inputs.wrapper-modules.wrappers.foot.wrap {
       inherit pkgs;
       settings = {
-        main.initial-color-theme = "dark";
+        main = {
+          initial-color-theme = "dark";
+          pad = "8x8";
+        };
         cursor = {
           style = "beam";
           blink = "no";
