@@ -136,6 +136,15 @@
           };
           "${super}+N".spawn-sh = "${lib.getExe noctaliaPkg} msg panel-toggle control-center";
 
+          "${super}+Ctrl+Up".focus-workspace-up = _: {};
+          "${super}+Ctrl+Down".focus-workspace-down = _: {};
+
+          "${super}+Alt+Up".move-workspace-up = _: {};
+          "${super}+Alt+Down".move-workspace-down = _: {};
+
+          "${super}+Shift+Ctrl+Up".move-column-to-workspace-up = _: {};
+          "${super}+Shift+Ctrl+Down".move-column-to-workspace-down = _: {};
+
           "${super}+return" = _: {
             props.hotkey-overlay-title = "Spawn Terminal";
             content.spawn-sh = lib.getExe terminalPkg;
@@ -143,12 +152,12 @@
 
           "${super}+Escape" = _: {
             props.hotkey-overlay-title = "Session Control";
-            content.spawn-sh = "${lib.getExe noctaliaPkg} msg panel-toggle session;";
+            content.spawn-sh = "${lib.getExe noctaliaPkg} msg panel-toggle launcher /session";
           };
 
           "${super}+B".spawn-sh = "librewolf";
           "${super}+O".toggle-overview = _: {};
-          "${super}+Q".close-window = _: {};
+          "${super}+W".close-window = _: {};
           "${super}+F".maximize-column = _: {};
           "${super}+R".switch-preset-column-width = _: {};
           "${super}+T".toggle-window-floating = _: {};
