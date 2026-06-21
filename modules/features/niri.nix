@@ -248,6 +248,8 @@ in {
     };
 
     config = {
+      environment.systemPackages = [pkgs.wl-clipboard];
+
       xdg.portal = {
         enable = true;
         extraPortals = [pkgs.xdg-desktop-portal-gnome pkgs.xdg-desktop-portal-wlr];
