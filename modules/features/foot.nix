@@ -71,6 +71,9 @@ in {
   };
 
   perSystem = {pkgs, ...}: {
-    packages.foot = makeFootPackage {inherit pkgs; colors = defaultTheme;};
+    packages.foot = makeFootPackage {
+      inherit pkgs;
+      colors = defaultTheme;
+    };
   };
 }

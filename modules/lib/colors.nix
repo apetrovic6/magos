@@ -70,8 +70,8 @@ in {
           builtin = "Gruvbox"
           community_palette = "Everforest"
           custom_palette = "custom"
-          
-          
+
+
           [dock]
           enabled = false
 
@@ -80,7 +80,11 @@ in {
 
           [lockscreen]
           enabled = true
-          ${if wallpaper != null then ''wallpaper = "${wallpaper}"'' else ""}
+          ${
+            if wallpaper != null
+            then ''wallpaper = "${wallpaper}"''
+            else ""
+          }
 
           [idle.behavior.lock]
           timeout = 600
@@ -92,7 +96,7 @@ in {
           command = "noctalia:dpms-off"
           resume_command = "noctalia:dpms-on"
           enabled = true
-          
+
         ''} $out/noctalia/noctalia.toml
       '';
     in
