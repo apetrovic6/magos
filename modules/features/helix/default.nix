@@ -6,7 +6,8 @@
   defaultTheme = "catppuccin_frappe";
 
   editorSettings = import ./_config/editor.nix;
-  languageSettings = import ./_config/languages.nix;
+  languages = import ./_config/languages.nix;
+  makeKeybinds = pkgs: import ./_config/keybinds.nix {inherit pkgs;};
 
   makeHelixPackage = {
     pkgs,
@@ -14,7 +15,16 @@
   }:
     inputs.wrapper-modules.wrappers.helix.wrap {
       inherit pkgs;
-      settings = editorSettings // {theme = theme;};
+      settings =
+        editorSettings
+        // {
+          theme = theme;
+          keys = (makeKeybinds pkgs).keys;
+        };
+      inherit languages;
+      # languages.language = language.language;
+      # languages.language-server = language.language-server;
+      extraPackages = with pkgs; [alejandra];
     };
 in {
   flake.nixosModules.helix = {
@@ -32,8 +42,15 @@ in {
     config = {
       programs.helix = {
         enable = true;
-        settings = editorSettings // {theme = config.magos.helix.theme;};
-        languages = languageSettings;
+        package = self.packages.helix;
+        # settings =
+        #   editorSettings
+        #   // {
+        #     theme = config.magos.helix.theme;
+        #     keys = (makeKeybinds pkgs).keys;
+        #   };
+        # inherit languages;
+        # runtimePackages = with pkgs; [alejandra];
       };
     };
   };
