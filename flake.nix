@@ -63,7 +63,7 @@
           self.nixosModules.stylix
         ];
 
-        magos.helix.theme = "everforest_dark";
+        # magos.helix.theme = "everforest_dark";
         magos.stylix.enable = true;
       };
 
