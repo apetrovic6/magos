@@ -3,7 +3,7 @@
   inputs,
   ...
 }: let
-  defaultTheme = "catppuccin_frappe";
+  defaultTheme = "everforest_dark";
 
   editorSettings = import ./_config/editor.nix;
   languages = import ./_config/languages.nix;
