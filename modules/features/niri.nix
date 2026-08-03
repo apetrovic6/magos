@@ -83,6 +83,14 @@
 
       extraConfig = ''
         prefer-no-csd
+
+        debug {
+            // NVIDIA: PipeWire dmabuf modifier fixation fails ("wrong modifier
+            // choice type" in the niri log), so screencast streams go straight
+            // from Paused back to Unconnected and nothing is ever shared.
+            // Forcing DRM_FORMAT_MOD_INVALID skips modifier negotiation.
+            force-pipewire-invalid-modifier
+        }
       '';
 
       input = {
