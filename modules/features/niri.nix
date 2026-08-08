@@ -84,13 +84,17 @@
       extraConfig = ''
         prefer-no-csd
 
-        debug {
-            // NVIDIA: PipeWire dmabuf modifier fixation fails ("wrong modifier
-            // choice type" in the niri log), so screencast streams go straight
-            // from Paused back to Unconnected and nothing is ever shared.
-            // Forcing DRM_FORMAT_MOD_INVALID skips modifier negotiation.
-            force-pipewire-invalid-modifier
-        }
+        // NVIDIA screencast: `force-pipewire-invalid-modifier` used to be set here
+        // to work around PipeWire modifier fixation failing ("wrong modifier choice
+        // type"). As of niri 26.04 / nvidia 595.84 it is actively harmful: GBM
+        // allocates the buffer fine with modifier=Invalid, but NVIDIA's EGL cannot
+        // import an implicit-modifier dmabuf, so every frame dies with
+        //   [GL] GL_INVALID_OPERATION ... EGLImage not supported
+        //   niri::screencasting::pw_utils: error rendering to dmabuf
+        // and the share is a black/frozen screen. Leave explicit modifier
+        // negotiation enabled. If "wrong modifier choice type" ever comes back,
+        // re-add:
+        //   debug { force-pipewire-invalid-modifier }
       '';
 
       input = {
