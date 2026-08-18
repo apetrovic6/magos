@@ -3,9 +3,21 @@
     {
       name = "nix";
       language-servers = ["nixd"];
+      # `-` is load-bearing: it puts alejandra in stdin->stdout mode, which is
+      # the contract Helix expects (buffer in, replacement buffer out).
+      #
+      # An include PATH here instead -- `args = ["."]` -- is a different mode
+      # entirely: alejandra ignores stdin, rewrites every .nix file under the cwd
+      # in place, and prints a `Formatted: <path>` line per changed file to
+      # stdout. Helix then takes that as the new buffer, so saving any .nix file
+      # replaces it with the name of some *other* file. It destroyed a 190-line
+      # file that way.
+      #
+      # `-q` silences the informational chatter (it goes to stderr, so stdout is
+      # clean either way, but alejandra itself suggests it).
       formatter = {
         command = "alejandra";
-        args = ["."];
+        args = ["-q" "-"];
       };
       auto-format = true;
     }
