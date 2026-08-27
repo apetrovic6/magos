@@ -8,7 +8,7 @@ in {
   ];
 
   keys.normal = {
-    C-b = [
+    C-o = [
       ":new"
       ":insert-output env XDG_CONFIG_HOME=$HOME/.config ${lib.getExe pkgs.lazygit}"
       ":buffer-close!"
