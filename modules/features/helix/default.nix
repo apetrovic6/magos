@@ -24,7 +24,15 @@
       inherit languages;
       # languages.language = language.language;
       # languages.language-server = language.language-server;
-      extraPackages = with pkgs; [alejandra];
+      # Renamed from `extraPackages` upstream in nix-wrapper-modules#540
+      # (2026-05-19). A pure rename for callers that only set it; the type also
+      # widened to accept `{ data, prefix ? false, ... }` entries so an entry can
+      # be prefixed rather than suffixed onto PATH.
+      #
+      # Not to be confused with `programs.helix.extraPackages`, which is the
+      # home-manager/NixOS option and still spelled the old way — that is the
+      # name in the commented-out block below.
+      runtimePkgs = with pkgs; [alejandra];
     };
 in {
   flake.nixosModules.helix = {

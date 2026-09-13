@@ -64,7 +64,37 @@
     };
   };
 
+  # https://book.leptos.dev/getting_started/leptos_dx.html
   language-server.rust-analyzer = {
-    config = {check.command = "clippy";};
+    config = {
+      check.command = "clippy";
+
+      # Leptos generates the body of `#[server]` twice — once for the server,
+      # once as the client-side stub — behind cfgs rust-analyzer cannot see. It
+      # expands the macro anyway and then reports errors in code that never
+      # compiles in that configuration. Skipping the expansion is cheaper than
+      # reading around the noise.
+      #
+      # `"component"` can be added to this list for the same reason and Leptos
+      # documents it as an option, but it is deliberately left out: ignoring it
+      # also throws away the generated props struct, and with it completion and
+      # type information for every component's props — which is most of what
+      # rust-analyzer is useful for in a Leptos view.
+      #
+      # Scoped to `leptos_macro`, so this is inert in a non-Leptos project.
+      procMacro.ignored.leptos_macro = ["server"];
+
+      # Leptos steers compilation with `csr` / `ssr` / `hydrate` feature flags,
+      # and rust-analyzer otherwise only sees the default set — so in an SSR
+      # project half the code reads as dead or missing.
+      #
+      # Unlike the setting above this one is NOT scoped to Leptos: it applies to
+      # every Rust project. That is fine where features are additive, but a crate
+      # with mutually exclusive features will fail to analyse with all of them
+      # on at once. If that ever bites, drop this line and put it in that
+      # project's own `.helix/languages.toml` instead — Helix merges a
+      # per-project file over this one.
+      cargo.allFeatures = true;
+    };
   };
 }
