@@ -32,7 +32,7 @@
       # Not to be confused with `programs.helix.extraPackages`, which is the
       # home-manager/NixOS option and still spelled the old way — that is the
       # name in the commented-out block below.
-      runtimePkgs = with pkgs; [alejandra];
+      runtimePkgs = with pkgs; [alejandra tailwindcss-language-server];
     };
 in {
   flake.nixosModules.helix = {

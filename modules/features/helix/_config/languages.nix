@@ -29,7 +29,7 @@
     {
       name = "rust";
       file-types = ["rs"];
-      language-servers = ["rust-analyzer"];
+      language-servers = ["rust-analyzer" "tailwindcss-language-server"];
     }
   ];
 
@@ -95,6 +95,43 @@
       # project's own `.helix/languages.toml` instead — Helix merges a
       # per-project file over this one.
       cargo.allFeatures = true;
+    };
+  };
+
+  # Tailwind completion inside Rust, for Leptos `view!` blocks.
+  #
+  # Attached to every Rust file rather than one project: with no CSS entry point
+  # importing tailwindcss anywhere above the file, the server finds no config and
+  # stays silent, so a non-Tailwind project pays only the process. Tailwind v4
+  # has no JS config file — the server looks for `@import "tailwindcss"` in a
+  # .css file instead (in the fishing repo that is apps/web/styles/tailwind.css),
+  # and `experimental.configFile` is the escape hatch when the search fails.
+  language-server.tailwindcss-language-server = {
+    command = "tailwindcss-language-server";
+    args = ["--stdio"];
+
+    config = {
+      # Makes the server read .rs as HTML, which is what gets completion and
+      # hover working inside a plain `class="..."` attribute in a `view!`.
+      # Everything else below is for the class names that are NOT in an
+      # attribute, which a regex has to dig out by hand.
+      userLanguages.rust = "html";
+
+      # Each entry is [outer, inner]: the first regex finds the construct, the
+      # second pulls class names out of the string literals inside it. Covering,
+      # in order: Leptos's conditional-class tuple `class=("md:ml-auto", flag)`,
+      # `tw_merge!` calls, and the `clx!` component definitions leptos_ui
+      # generates from.
+      #
+      # Note what is NOT here and cannot be: `class:md:ml-auto=flag`. That class
+      # name is part of the attribute *name*, not a string literal, so there is
+      # nothing for a regex to capture — the tuple form above is the spelling
+      # that gets tooling support.
+      tailwindCSS.experimental.classRegex = [
+        [''class=\(([^)]*)\)'' ''"([^"]*)"'']
+        [''tw_merge!\(([^)]*)\)'' ''"([^"]*)"'']
+        [''clx!\s*\{([^}]*)\}'' ''"([^"]*)"'']
+      ];
     };
   };
 }
