@@ -130,7 +130,11 @@
       # Not to be confused with `programs.helix.extraPackages`, which is the
       # home-manager/NixOS option and still spelled the old way — that is the
       # name in the commented-out block below.
-      runtimePkgs = with pkgs; [alejandra tailwindcss-language-server];
+      # steel-language-server backs the `scheme` entry in _config/languages.nix.
+      # It resolves its own index out of $STEEL_HOME/lsp, which it inherits from
+      # this wrapper -- see seedSteelHome above. Without STEEL_HOME set it panics
+      # on startup ("Unable to find steel home location").
+      runtimePkgs = with pkgs; [alejandra tailwindcss-language-server steel-language-server];
 
       # The wrapper already pins XDG_CONFIG_HOME to its generated config, so
       # helix would look for init.scm next to config.toml. Point it at our own

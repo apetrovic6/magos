@@ -31,7 +31,19 @@
       file-types = ["rs"];
       language-servers = ["rust-analyzer" "tailwindcss-language-server"];
     }
+    {
+      # Helix already ships a `scheme` language (tree-sitter grammar, file-types
+      # ss/scm/sld) but attaches no language server to it. The .scm files in this
+      # repo are Steel, so point it at Steel's server.
+      name = "scheme";
+      language-servers = ["steel-language-server"];
+    }
   ];
+
+  # No args: the server speaks LSP over plain stdio. It has no configurable
+  # options either -- its only knob is STEEL_LSP_HOME, which overrides the
+  # $STEEL_HOME/lsp directory it reads helix's generated builtin stubs from.
+  language-server.steel-language-server.command = "steel-language-server";
 
   language-server.yaml-language-server = {
     command = "yaml-language-server";
