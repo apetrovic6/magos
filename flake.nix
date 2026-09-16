@@ -37,6 +37,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    helix-w-plugins = {
+      url = "github:mattwparas/helix/steel-event-system";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    helix-plugins.url = "github:maxschipper/helix-plugins-nix";
+
     treefmt-nix.url = "github:numtide/treefmt-nix";
   };
 
@@ -81,7 +88,7 @@
           # add more: programs.prettier.enable = true; etc.
         };
 
-        devShells.default = with pkgs; mkShell {packages = [nil nixd];};
+        devShells.default = with pkgs; mkShell {packages = [nil nixd steel steel-language-server];};
       };
 
       # flake = {
