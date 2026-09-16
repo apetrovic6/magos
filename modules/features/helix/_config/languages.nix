@@ -94,7 +94,7 @@
       # rust-analyzer is useful for in a Leptos view.
       #
       # Scoped to `leptos_macro`, so this is inert in a non-Leptos project.
-      procMacro.ignored.leptos_macro = ["server"];
+      procMacro.ignored.leptos_macro = [];
 
       # Leptos steers compilation with `csr` / `ssr` / `hydrate` feature flags,
       # and rust-analyzer otherwise only sees the default set — so in an SSR
