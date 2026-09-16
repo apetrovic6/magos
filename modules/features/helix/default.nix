@@ -50,7 +50,7 @@ in {
     config = {
       programs.helix = {
         enable = true;
-        package = self.packages.helix;
+        package = self.packages.${pkgs.stdenv.hostPlatform.system}.helix;
         # settings =
         #   editorSettings
         #   // {
