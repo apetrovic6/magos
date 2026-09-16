@@ -21,5 +21,10 @@ in {
       ":open %sh{cat /tmp/unique-file}"
       ":redraw"
     ];
+
+    space.o = {
+      o = ":oil";
+      "." = ":oil-toggle-hidden";
+    };
   };
 }
