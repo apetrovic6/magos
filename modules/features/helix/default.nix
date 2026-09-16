@@ -12,8 +12,12 @@
 
   # Steel cogs to install. Dependencies are pulled in automatically, so listing
   # `oil` is enough to also get `notify`.
-  selectPlugins = p: [
+  selectPlugins = system: p: [
     p.oil
+    # Developed out of tree, so it comes from a flake input rather than the
+    # helixPlugins set -- but it carries the same cogName/pluginDependencies
+    # passthru, so pluginClosure walks it exactly like a packaged cog.
+    inputs.connect-hx.packages.${system}.default
     # Packaged with meta.license = unfree, but upstream ships LICENSE-MIT and the
     # Cargo manifest agrees. Correcting it here keeps this one plugin from
     # forcing nixpkgs.config.allowUnfree across the whole configuration.
@@ -50,7 +54,7 @@
       inputs.helix-plugins.overlays.default
     ];
 
-    plugins = pluginClosure (selectPlugins hxPkgs.helixPlugins);
+    plugins = pluginClosure (selectPlugins pkgs.stdenv.hostPlatform.system hxPkgs.helixPlugins);
     nativePlugins = builtins.filter (drv: (drv.native or null) != null) plugins;
 
     # steel resolves `(require "oil/oil.scm")` against $STEEL_HOME/cogs and

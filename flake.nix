@@ -44,6 +44,16 @@
 
     helix-plugins.url = "github:maxschipper/helix-plugins-nix";
 
+    # Developed out of tree at ~/clan/connect.hx. A path: input while it is
+    # unpublished -- switch to the github URL once it is pushed. The follows
+    # keep its helixPlugins scope identical to the one above, so run-command
+    # and http2curl are not built twice.
+    connect-hx = {
+      url = "path:/home/apetrovic/clan/connect.hx";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.helix-plugins.follows = "helix-plugins";
+    };
+
     treefmt-nix.url = "github:numtide/treefmt-nix";
   };
 

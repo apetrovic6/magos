@@ -19,3 +19,9 @@
 ;; never reaches its event loop while init.scm still holds the engine).
 ;; Requiring it exposes :spawn-watcher to start it by hand instead.
 (require "helix-file-watcher/file-watcher.scm")
+
+;; connect.hx -- ConnectRPC client, developed out of tree at ~/clan/connect.hx.
+;; Required here at top level, not from a wrapper module, so its provides land
+;; in the global env and helix turns them into typed commands. Right now that
+;; is only :connect-doctor, which reports which executors are on PATH.
+(require "connect.hx/connect-client.scm")
