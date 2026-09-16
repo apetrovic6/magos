@@ -12,9 +12,14 @@
   makeHelixPackage = {
     pkgs,
     theme ? defaultTheme,
-  }:
+  }: let
+    # The steel plugin fork ships an overlay whose only attr is `helix`;
+    # the wrapper defaults its base package to `pkgs.helix`, so extending
+    # pkgs here is what swaps upstream helix for the plugin build.
+    hxPkgs = pkgs.extend inputs.helix-w-plugins.overlays.default;
+  in
     inputs.wrapper-modules.wrappers.helix.wrap {
-      inherit pkgs;
+      pkgs = hxPkgs;
       settings =
         editorSettings
         // {
