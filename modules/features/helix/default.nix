@@ -1,6 +1,7 @@
 {
   self,
   inputs,
+  lib,
   ...
 }: let
   defaultTheme = "everforest_dark";
@@ -9,14 +10,106 @@
   languages = import ./_config/languages.nix;
   makeKeybinds = pkgs: import ./_config/keybinds.nix {inherit pkgs;};
 
+  # Steel cogs to install. Dependencies are pulled in automatically, so listing
+  # `oil` is enough to also get `notify`.
+  selectPlugins = p: [
+    p.oil
+    # Packaged with meta.license = unfree, but upstream ships LICENSE-MIT and the
+    # Cargo manifest agrees. Correcting it here keeps this one plugin from
+    # forcing nixpkgs.config.allowUnfree across the whole configuration.
+    (p.helix-file-watcher.overrideAttrs (old: {
+      meta = old.meta // {license = lib.licenses.mit;};
+    }))
+  ];
+
+  # Each plugin may declare `pluginDependencies`; walk the closure so a cog
+  # never ends up in STEEL_HOME without the cogs it requires.
+  pluginClosure = plugins: let
+    toNode = p: {
+      key = p.cogName;
+      val = p;
+    };
+  in
+    map (node: node.val) (builtins.genericClosure {
+      startSet = map toNode plugins;
+      operator = node: map toNode (node.val.pluginDependencies or []);
+    });
+
   makeHelixPackage = {
     pkgs,
     theme ? defaultTheme,
   }: let
-    # The steel plugin fork ships an overlay whose only attr is `helix`;
-    # the wrapper defaults its base package to `pkgs.helix`, so extending
-    # pkgs here is what swaps upstream helix for the plugin build.
-    hxPkgs = pkgs.extend inputs.helix-w-plugins.overlays.default;
+    hxPkgs = pkgs.appendOverlays [
+      # The steel plugin fork ships an overlay whose only attr is `helix`;
+      # the wrapper defaults its base package to `pkgs.helix`, so extending
+      # pkgs here is what swaps upstream helix for the plugin build.
+      inputs.helix-w-plugins.overlays.default
+      # Adds `helixPlugins`. Only the cog packages are used from this flake --
+      # its NixOS/home-manager modules default to pkgs.steelix, which would
+      # pull in a second helix build instead of the one above.
+      inputs.helix-plugins.overlays.default
+    ];
+
+    plugins = pluginClosure (selectPlugins hxPkgs.helixPlugins);
+    nativePlugins = builtins.filter (drv: (drv.native or null) != null) plugins;
+
+    # steel resolves `(require "oil/oil.scm")` against $STEEL_HOME/cogs and
+    # loads `#%require-dylib` libraries out of $STEEL_HOME/native.
+    #
+    # This cannot be handed to helix as a store path: on every startup helix
+    # writes its own builtin cogs into $STEEL_HOME/cogs/helix (generate_module
+    # in helix-term/src/commands/engine/steel/mod.rs, which unwraps the write),
+    # so a read-only STEEL_HOME panics the editor before it draws a frame. It
+    # gets seeded into a writable cache dir at launch instead, see below.
+    steelHome = pkgs.linkFarm "helix-steel-home" (
+      map (drv: {
+        name = "cogs/${drv.cogName}";
+        path = drv;
+      })
+      plugins
+      ++ lib.optional (nativePlugins != []) {
+        name = "native";
+        path = pkgs.symlinkJoin {
+          name = "helix-steel-native";
+          paths = map (drv: drv.native) nativePlugins;
+        };
+      }
+    );
+
+    # These must be REAL files, not a linkFarm of symlinks. Steel resolves a
+    # relative `(require "plugins/oil.scm")` against the directory of the
+    # requiring file after following symlinks, so a symlinked init.scm
+    # resolves against /nix/store and the require silently falls through to
+    # $STEEL_HOME/cogs, where it is not found.
+    #
+    # helix.scm has to exist even though we keep it empty: when it is missing
+    # helix prints "Unable to find the `helix.scm` file, creating...." to
+    # stdout on every launch, which scribbles over the TUI.
+    steelConfig = pkgs.runCommand "helix-steel-config" {} ''
+      mkdir -p $out/plugins
+      touch $out/helix.scm
+      cp ${./_config/init.scm} $out/init.scm
+      cp -r ${./_config/plugins}/. $out/plugins/
+    '';
+
+    # Copy the cogs into a writable dir, keyed on the store path so a rebuild
+    # re-seeds and a repeat launch does not. `cp -L` dereferences the linkFarm
+    # symlinks and `--no-preserve=mode` plus the chmod makes the copies
+    # writable, so nothing helix touches points back at the store.
+    seedSteelHome = pkgs.writeShellScript "helix-seed-steel-home" ''
+      if [ -z "''${STEEL_HOME:-}" ]; then
+        STEEL_HOME="''${XDG_CACHE_HOME:-$HOME/.cache}/helix-steel"
+        export STEEL_HOME
+        stamp="$STEEL_HOME/.nix-store-path"
+        if [ "$(cat "$stamp" 2>/dev/null)" != "${steelHome}" ]; then
+          rm -rf "$STEEL_HOME"
+          mkdir -p "$STEEL_HOME"
+          cp -RL --no-preserve=mode "${steelHome}/." "$STEEL_HOME/"
+          chmod -R u+w "$STEEL_HOME"
+          printf '%s' "${steelHome}" > "$stamp"
+        fi
+      fi
+    '';
   in
     inputs.wrapper-modules.wrappers.helix.wrap {
       pkgs = hxPkgs;
@@ -38,6 +131,14 @@
       # home-manager/NixOS option and still spelled the old way — that is the
       # name in the commented-out block below.
       runtimePkgs = with pkgs; [alejandra tailwindcss-language-server];
+
+      # The wrapper already pins XDG_CONFIG_HOME to its generated config, so
+      # helix would look for init.scm next to config.toml. Point it at our own
+      # store dir instead rather than teaching the wrapper to emit .scm files.
+      # This one can stay read-only: helix writes here only to create helix.scm
+      # and init.scm when they are missing, and we ship both.
+      env.HELIX_STEEL_CONFIG = "${steelConfig}";
+      runShell = [". ${seedSteelHome}"];
     };
 in {
   flake.nixosModules.helix = {
