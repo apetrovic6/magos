@@ -22,6 +22,15 @@ in {
       ":redraw"
     ];
 
+    # connect.hx -- `space c` is not one of helix's default space bindings, but a
+    # config binding shadows the default map either way, so nothing is lost if
+    # that ever changes upstream.
+    space.c = {
+      c = ":connect-exec";
+      d = ":connect-doctor";
+      x = ":connect-clear";
+    };
+
     space.o = {
       o = ":oil";
       "." = ":oil-toggle-hidden";
