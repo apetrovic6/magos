@@ -234,27 +234,28 @@
            (normal (ret ":oil-enter")
                    (backspace ":oil-up")))))
 
-;; The `space o` bindings, moved here from keybinds.nix.
+;; The oil bindings, kept here rather than in keybinds.nix.
 ;;
-;; Not a stylistic move: only the steel keymap path attaches documentation.
+;; Not a stylistic choice: only the steel keymap path attaches documentation.
 ;; merge-keybindings feeds keymap-update-documentation! the `@doc` of every
-;; bound command, so these rows read "Open the oil file manager" and "Toggle
-;; visibility of hidden (dot) files and directories". Bound from the editor
-;; config instead, they come out as "Undocumented plugin command" -- the
-;; fallback in MappableCommand::from_str for any `:command` that is not in
-;; TYPABLE_COMMAND_MAP, which is every steel command.
+;; bound command, so `space O` reads "Open the oil file manager". Bound from the
+;; editor config it would read "Undocumented plugin command" -- the fallback in
+;; MappableCommand::from_str for any `:command` absent from TYPABLE_COMMAND_MAP,
+;; which is every steel command.
 ;;
-;; What this does NOT fix, because nothing can: the `o` row in the parent
-;; `space` menu. A submenu's description is its KeyTrieNode name, that field is
-;; #[serde(skip)], and update_documentation only walks MappableCommand leaves --
-;; so there is no way to set it from config or from steel. An empty description
-;; renders as no row at all rather than a blank one, because Info::new skips a
-;; key whose desc yields no lines. `space o` works; it is simply not listed.
+;; `space O` is a LEAF rather than a `space o` submenu, and that is what makes
+;; it visible in the space menu at all. A submenu's description is its
+;; KeyTrieNode name; that field is #[serde(skip)] and update_documentation only
+;; walks MappableCommand leaves, so it cannot be set from config or from steel.
+;; An empty description renders as no row rather than a blank one, because
+;; Info::new skips a key whose desc yields no lines -- so a grouped binding
+;; works but is never listed. Leaves are the only bindings that can be found by
+;; reading the menu.
 ;;
-;; Deferred and separate from the buffer keymap above so that a failure in
-;; either one cannot take the other down with it.
+;; Deferred and separate from the buffer keymap above so a failure in either one
+;; cannot take the other down with it.
 (enqueue-thread-local-callback
  (lambda ()
    (keymap (global)
-           (normal (space (o (o ":oil")
-                             ("." ":oil-toggle-hidden")))))))
+           (normal (space (O ":oil"))
+                   ("C-." ":oil-toggle-hidden")))))
