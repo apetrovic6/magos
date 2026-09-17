@@ -52,7 +52,8 @@
     # convenient. The follows keep its helixPlugins scope identical to the one
     # above, so run-command is not built twice.
     connect-hx = {
-      url = "path:/home/apetrovic/clan/connect.hx";
+      # url = "path:/home/apetrovic/clan/connect.hx";
+      url = "github:apetrovic6/connect.hx";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.helix-plugins.follows = "helix-plugins";
     };
