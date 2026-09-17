@@ -27,7 +27,7 @@
 (require "connect.hx/connect-client.scm")
 
 
-;; Bind connect.hx under `space H`, scoped to .connect and .http files -- helix
+;; Bind :connect-exec to `space H`, scoped to .connect and .http files -- helix
 ;; picks a keymap by the focused file's extension, so the key stays free
 ;; elsewhere. Bound from steel so the popup shows each command's @doc rather
 ;; than "Undocumented plugin command"; that only helps steel commands, not
