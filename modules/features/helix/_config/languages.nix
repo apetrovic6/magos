@@ -1,6 +1,19 @@
 {
   language = [
     {
+      # .connect is our own extension for connect.hx; .http is the
+      # vscode-restclient convention the format extends.
+      name = "http";
+      scope = "source.http";
+      file-types = ["http" "connect"];
+      comment-token = "#";
+      injection-regex = "http";
+      indent = {
+        tab-width = 2;
+        unit = "  ";
+      };
+    }
+    {
       name = "nix";
       language-servers = ["nixd"];
       # `-` is load-bearing: it puts alejandra in stdin->stdout mode, which is
@@ -31,7 +44,19 @@
       file-types = ["rs"];
       language-servers = ["rust-analyzer" "tailwindcss-language-server"];
     }
+    {
+      # Helix already ships a `scheme` language (tree-sitter grammar, file-types
+      # ss/scm/sld) but attaches no language server to it. The .scm files in this
+      # repo are Steel, so point it at Steel's server.
+      name = "scheme";
+      language-servers = ["steel-language-server"];
+    }
   ];
+
+  # No args: the server speaks LSP over plain stdio. It has no configurable
+  # options either -- its only knob is STEEL_LSP_HOME, which overrides the
+  # $STEEL_HOME/lsp directory it reads helix's generated builtin stubs from.
+  language-server.steel-language-server.command = "steel-language-server";
 
   language-server.yaml-language-server = {
     command = "yaml-language-server";
@@ -82,7 +107,7 @@
       # rust-analyzer is useful for in a Leptos view.
       #
       # Scoped to `leptos_macro`, so this is inert in a non-Leptos project.
-      procMacro.ignored.leptos_macro = ["server"];
+      procMacro.ignored.leptos_macro = [];
 
       # Leptos steers compilation with `csr` / `ssr` / `hydrate` feature flags,
       # and rust-analyzer otherwise only sees the default set — so in an SSR

@@ -37,6 +37,27 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    helix-w-plugins = {
+      url = "github:mattwparas/helix/steel-event-system";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    helix-plugins.url = "github:maxschipper/helix-plugins-nix";
+
+    # Developed out of tree at ~/clan/connect.hx. Published at
+    # github:apetrovic6/connect.hx, but deliberately still a path: input so
+    # local edits can be tested without pushing -- nix pins a path: input by
+    # narHash, so a change there needs `nix flake update connect-hx` here
+    # before a rebuild picks it up. Switch the url when that stops being
+    # convenient. The follows keep its helixPlugins scope identical to the one
+    # above, so run-command is not built twice.
+    connect-hx = {
+      # url = "path:/home/apetrovic/clan/connect.hx";
+      url = "github:apetrovic6/connect.hx";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.helix-plugins.follows = "helix-plugins";
+    };
+
     treefmt-nix.url = "github:numtide/treefmt-nix";
   };
 
@@ -81,7 +102,7 @@
           # add more: programs.prettier.enable = true; etc.
         };
 
-        devShells.default = with pkgs; mkShell {packages = [nil nixd];};
+        devShells.default = with pkgs; mkShell {packages = [nil nixd steel steel-language-server];};
       };
 
       # flake = {
