@@ -113,8 +113,8 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1789645791,
-        "narHash": "sha256-mH2cX1+/xQsyqyDAXiYBeB97Se71Nj0wQ2s5jKhTmrk=",
+        "lastModified": 1789647245,
+        "narHash": "sha256-t+1t5fiIlDLw+194PDRQEnxq+uP1WuCa/JrDgc/mfco=",
         "path": "/home/apetrovic/clan/connect.hx",
         "type": "path"
       },

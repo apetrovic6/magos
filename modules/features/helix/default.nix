@@ -177,7 +177,10 @@
       # It resolves its own index out of $STEEL_HOME/lsp, which it inherits from
       # this wrapper -- see seedSteelHome above. Without STEEL_HOME set it panics
       # on startup ("Unable to find steel home location").
-      runtimePkgs = with pkgs; [alejandra tailwindcss-language-server steel-language-server];
+      # buf backs connect.hx's schema-aware executor. Appended to PATH by the
+      # wrapper, so a project dev shell's own buf still wins -- this is a floor,
+      # not an override.
+      runtimePkgs = with pkgs; [alejandra tailwindcss-language-server steel-language-server buf];
 
       # The wrapper already pins XDG_CONFIG_HOME to its generated config, so
       # helix would look for init.scm next to config.toml. Point it at our own
