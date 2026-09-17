@@ -3,7 +3,32 @@
 ;; This is a *module*, not init.scm, so two things differ from top-level code:
 ;; it does not inherit init.scm's imports and has to require what it uses, and
 ;; nothing it defines or requires escapes unless it is in the provide below.
-(require "oil/oil.scm")
+;;
+;; oil's own `oil` comes in renamed to `oil-open` so the `oil` defined further
+;; down -- the wrapper that records which buffer oil actually opened -- can take
+;; its place as the :oil command. That rename is why every other oil export has
+;; to be listed by hand: only-in is exhaustive, and a bare `(require
+;; "oil/oil.scm")` alongside it would drag `oil` back in and collide with the
+;; wrapper. Keep this list and the provide list below in step. Forgetting a name
+;; here fails at module load with "free identifier", which is the loud direction
+;; and the one to prefer.
+(require (only-in "oil/oil.scm"
+                  (oil oil-open)
+                  oil-enter
+                  oil-up
+                  oil-root
+                  oil-refresh
+                  oil-save
+                  oil-close
+                  oil-toggle-hidden
+                  oil-toggle-git-ignored
+                  oil-toggle-metadata
+                  oil-configure!
+                  oil-yank
+                  oil-cut
+                  oil-paste
+                  oil-clipboard-clear
+                  OIL-BUFFER-NAME))
 (require (only-in "helix/commands.scm"
                   (write hx-write)
                   (write-quit hx-write-quit)
@@ -12,7 +37,8 @@
 (require (only-in "helix/editor.scm"
                   editor-focus
                   editor->doc-id
-                  editor-document->path))
+                  editor-document->path
+                  editor-doc-exists?))
 (require (only-in "helix/misc.scm" enqueue-thread-local-callback))
 ;; Not only-in: this is a module, so nothing it requires leaks into the global
 ;; env anyway, and `keymap` is a macro rather than a plain binding.
@@ -44,12 +70,86 @@
 ;; show-dotfiles, show-git-ignored -- both #false is the oil default
 (oil-configure! #false #false)
 
-;; The oil buffer is a scratch buffer, so "no path" is the discriminator:
-;; helix exposes set-scratch-buffer-name! but no getter, oil keeps its doc-id
-;; private, and #%add-reverse-mapping is write-only from steel -- there is
-;; nothing more precise to test against.
+
+;; --- which buffer is the oil buffer -------------------------------------
+;;
+;; Read this before touching `w`, `wq`, `q` or `q!`, because those four are not
+;; scoped to this buffer the way they look. execute_command_line
+;; (helix-term/src/commands/typed.rs:4145) asks the scripting engine BEFORE it
+;; consults TYPABLE_COMMAND_MAP, and the builtin only wins the tie when
+;; identifier_available_at_startup says so (commands/engine/steel/mod.rs:1721) --
+;; a set populated from a bare Engine::new(), which means steel primitives and
+;; nothing else. `q` is not in it. So whatever `q` is defined to here is what :q
+;; runs, in every buffer, for the whole session; keymap-invoked typed commands
+;; take the same path (commands.rs:255). The discriminator below is therefore
+;; load-bearing for being able to leave the editor at all, and it has to be
+;; exact rather than merely plausible.
+;;
+;; It used to be "the focused buffer has no path", which is wrong in a way that
+;; cost a while to find: editor-document->path returns #false for ANY scratch
+;; buffer (mod.rs:4891), and the buffer helix starts up with is a scratch. So in
+;; a fresh `hx` the test was spuriously true and :q, :q! and :wq all did
+;; NOTHING -- no error, no message, editor still running -- because oil-close is
+;; buffer-close!, and closing the last document is a visual no-op:
+;; Editor::close_document (helix-view/src/editor.rs:2241) turns round and
+;; recreates a fresh scratch doc and view. :w was just as bad, popping oil's
+;; "no active oil buffer / Run :oil first" where helix would have said "Can't
+;; save with no path set!". Any pathless buffer had it, a `:new` scratch too,
+;; not merely the startup one.
+;;
+;; The fix is to record the doc-id when oil opens rather than trying to
+;; recognise the buffer afterwards. Recognising it afterwards is not possible:
+;; set-scratch-buffer-name! (mod.rs:4824) writes doc.name with no getter beside
+;; it, #%add-reverse-mapping (mod.rs:542) only ever writes into
+;; BUFFER_EXTENSION_KEYMAP.reverse, and oil keeps its own *oil-doc-id* out of
+;; its provide list. Recording is also the sturdier half of the bargain:
+;; DocumentIds come off a monotonic counter and are never reused
+;; (helix-view/src/editor.rs:2079), so a stale id can stop matching but can
+;; never quietly come to mean some other buffer.
+(define *oil-doc-id* #false)
+
+;; Guarded on "pathless" -- not as the discriminator this time, just as a
+;; promise about what can ever be recorded. If oil ever managed to fail after
+;; leaving focus on a real file, recording unguarded would pin that file's
+;; doc-id, and :q on it would then buffer-close! the file instead of quitting.
+;; A file buffer has a path, so this makes that branch unreachable. Every other
+;; way this can go wrong leaves a stale id, which fails toward the native
+;; command -- "actually quit" -- and that is the safe direction to fail in.
+(define (record-oil-doc-id!)
+  (let ([doc-id (editor->doc-id (editor-focus))])
+    (when (not (editor-document->path doc-id))
+      (set! *oil-doc-id* doc-id))))
+
+;; Deferred, because oil does not have the doc-id yet when it returns: opening
+;; a fresh buffer goes helix.new first and sets *oil-doc-id* from its own
+;; enqueued callback (oil.scm:320). Ours is enqueued after oil's and so runs
+;; after it, by which point focus is the oil buffer. The already-open path
+;; switches synchronously and is focused either way, so one order serves both.
+;;
+;; Ends in a bare `void` deliberately: a non-Void steel return value gets
+;; written to the status line (mod.rs:1750), and without this :oil would report
+;; whatever enqueue-thread-local-callback happened to hand back.
+;;
+;; Bare, and NOT `(void)`. In steel `void` is a value, not a nullary procedure
+;; the way it is in racket -- the whole stdlib uses it as one (`return! void`,
+;; `[else void]`). Calling it costs you ":oil" every time with
+;; "BadSyntax: TailCall - Application not a procedure" on the status line, and
+;; confusingly the buffer still opens and still works, because the error lands
+;; after oil-open has already done its job.
+(define (oil)
+  (oil-open)
+  (enqueue-thread-local-callback record-oil-doc-id!)
+  void)
+
+;; Three conditions, and every one of them falls through to the native command
+;; when it fails: nothing recorded yet, the recorded buffer is gone (oil-close
+;; and buffer-close! both land here, which is what makes this self-healing), or
+;; focus is simply somewhere else.
 (define (in-oil-buffer?)
-  (not (editor-document->path (editor->doc-id (editor-focus)))))
+  (and *oil-doc-id*
+       (editor-doc-exists? *oil-doc-id*)
+       (equal? *oil-doc-id* (editor->doc-id (editor-focus)))))
+
 
 (define (w . args)
   (if (in-oil-buffer?)
@@ -71,6 +171,13 @@
 ;; :q closes the oil buffer rather than the view. Without this, :q in the oil
 ;; buffer closes the whole view -- and exits helix when it is the only one --
 ;; because oil opens via helix.new in the current view rather than a split.
+;; Worse than it sounds, and the reason plain buffer-local keymaps are not an
+;; adequate substitute here: oil names its scratch buffer, and
+;; buffers_remaining_impl (typed.rs) skips named scratches when it checks for
+;; unsaved work ("Named scratch documents should not be included here"), so
+;; native :q in the oil buffer would not even stop to ask -- it would exit with
+;; staged renames still pending. Keymaps cannot cover for this either way; they
+;; bind keys, and :q is a typed command.
 (define (q . args)
   (if (in-oil-buffer?)
       (oil-close)
@@ -78,11 +185,15 @@
 
 ;; :q! must stay a real escape hatch, so the non-oil branch goes to quit!,
 ;; not quit -- otherwise :q! on a modified buffer gets refused like :q and
-;; there is no way out of the editor short of :quit!.
+;; there is no way out of the editor short of :quit!. Which does still work,
+;; for what it is worth: :quit and :quit! are separate entries in
+;; TYPABLE_COMMAND_MAP and nothing here shadows them, so they remain the way
+;; out if anything in this file ever throws on the way to hx-quit!.
 (define (q! . args)
   (if (in-oil-buffer?)
       (oil-close)
       (apply hx-quit! args)))
+
 
 
 ;; Enter descends into the entry under the cursor.
