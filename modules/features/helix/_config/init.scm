@@ -26,46 +26,25 @@
 ;; is only :connect-doctor, which reports which executors are on PATH.
 (require "connect.hx/connect-client.scm")
 
-;; Needed for the `keymap` macro below. Requiring it at top level is fine --
-;; init.scm is the global environment, which is where these bindings belong.
-(require "helix/keymaps.scm")
-;; only-in: init.scm is the global environment, so a bare require would publish
-;; every name in misc.scm as a global -- and helix turns post-startup globals
-;; into typed commands.
-(require (only-in "helix/misc.scm" enqueue-thread-local-callback))
 
-;; Bind connect.hx under `space c`. Done here rather than in keybinds.nix
-;; because only the steel keymap path attaches documentation: it reads each
-;; bound command's `@doc` string, which is what the space-menu popup shows. A
-;; keymap written in the editor config cannot supply that text -- helix skips
-;; KeyTrieNode's label when deserialising, so a config-defined submenu renders
-;; with a blank description.
+;; Bind connect.hx under `space c`.
+;;
+;; Bound from steel rather than keybinds.nix because these are steel commands:
+;; merge-keybindings feeds keymap-update-documentation! the `@doc` of each one,
+;; so the rows read "Execute the request under the cursor..." instead of
+;; helix's "Undocumented plugin command" fallback, which is what a steel
+;; command bound from the editor config gets.
+;;
+;; That only applies to STEEL commands. A native typable command gains nothing
+;; from being bound here -- see the `space B` bindings in keybinds.nix.
+;;
+;; `c` itself will not be listed in the space menu, as no user-defined submenu
+;; is: a submenu's description is its KeyTrieNode name, which is
+;; #[serde(skip)] and untouched by update_documentation, and Info::new writes
+;; no row at all for an empty description rather than a blank one. Only the
+;; built-in submenus (`space w`) have names, set by the keymap! macro in rust.
+;; The bindings work; they are just not discoverable from the menu.
 ;;
 ;; The installer defers its own registration, for the reason documented at its
 ;; definition.
 (connect-install-keybindings!)
-
-;; Buffer closing under `space B`.
-;;
-;; Bound here rather than in keybinds.nix so the rows carry their real
-;; descriptions ("Close the current buffer.", and the forceful variant). Only
-;; the steel keymap path attaches documentation: merge-keybindings feeds
-;; keymap-update-documentation! the `@doc` of each bound command. The editor
-;; config cannot -- MappableCommand::from_str in this fork builds a typable
-;; command's doc as `:name args`, dropping upstream's branch that used the
-;; command's own doc when no arguments were given.
-;;
-;; The names take HYPHENS. `:buffer_close` is not a command at all: the typable
-;; commands are buffer-close and buffer-close!, and an unknown `:name` does not
-;; fail loudly -- from_str falls back to a placeholder command that only errors
-;; when the key is pressed.
-;;
-;; `B` itself stays absent from the space menu, as every submenu does: its
-;; description would be its KeyTrieNode name, which is #[serde(skip)] and
-;; untouched by update_documentation. The two entries inside it are documented;
-;; the group holding them cannot be.
-(enqueue-thread-local-callback
- (lambda ()
-   (keymap (global)
-           (normal (space (B (c ":buffer-close")
-                             (C ":buffer-close!")))))))
