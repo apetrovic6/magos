@@ -25,3 +25,14 @@
 ;; in the global env and helix turns them into typed commands. Right now that
 ;; is only :connect-doctor, which reports which executors are on PATH.
 (require "connect.hx/connect-client.scm")
+
+;; Bind connect.hx under `space c`. Done here rather than in keybinds.nix
+;; because only the steel keymap path attaches documentation: it reads each
+;; bound command's `@doc` string, which is what the space-menu popup shows. A
+;; keymap written in the editor config cannot supply that text -- helix skips
+;; KeyTrieNode's label when deserialising, so a config-defined submenu renders
+;; with a blank description.
+;;
+;; The installer defers its own registration, for the reason documented at its
+;; definition.
+(connect-install-keybindings!)
