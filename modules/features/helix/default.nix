@@ -180,7 +180,9 @@
       # buf backs connect.hx's schema-aware executor. Appended to PATH by the
       # wrapper, so a project dev shell's own buf still wins -- this is a floor,
       # not an override.
-      runtimePkgs = with pkgs; [alejandra tailwindcss-language-server steel-language-server buf];
+      # grpcurl backs connect.hx's request scaffolding: it reads reflection and
+      # prints a protojson skeleton for a message, which buf build cannot do.
+      runtimePkgs = with pkgs; [alejandra tailwindcss-language-server steel-language-server buf grpcurl];
 
       # The wrapper already pins XDG_CONFIG_HOME to its generated config, so
       # helix would look for init.scm next to config.toml. Point it at our own
