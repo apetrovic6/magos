@@ -27,24 +27,9 @@
 (require "connect.hx/connect-client.scm")
 
 
-;; Bind connect.hx under `space c`.
-;;
-;; Bound from steel rather than keybinds.nix because these are steel commands:
-;; merge-keybindings feeds keymap-update-documentation! the `@doc` of each one,
-;; so the rows read "Execute the request under the cursor..." instead of
-;; helix's "Undocumented plugin command" fallback, which is what a steel
-;; command bound from the editor config gets.
-;;
-;; That only applies to STEEL commands. A native typable command gains nothing
-;; from being bound here -- see the `space B` bindings in keybinds.nix.
-;;
-;; `c` itself will not be listed in the space menu, as no user-defined submenu
-;; is: a submenu's description is its KeyTrieNode name, which is
-;; #[serde(skip)] and untouched by update_documentation, and Info::new writes
-;; no row at all for an empty description rather than a blank one. Only the
-;; built-in submenus (`space w`) have names, set by the keymap! macro in rust.
-;; The bindings work; they are just not discoverable from the menu.
-;;
-;; The installer defers its own registration, for the reason documented at its
-;; definition.
+;; Bind connect.hx under `space H`, scoped to .connect and .http files -- helix
+;; picks a keymap by the focused file's extension, so the key stays free
+;; elsewhere. Bound from steel so the popup shows each command's @doc rather
+;; than "Undocumented plugin command"; that only helps steel commands, not
+;; native ones. The installer defers its own registration.
 (connect-install-keybindings!)
