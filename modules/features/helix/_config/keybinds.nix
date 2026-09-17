@@ -23,9 +23,5 @@ in {
     ];
 
 
-    space.o = {
-      o = ":oil";
-      "." = ":oil-toggle-hidden";
-    };
   };
 }

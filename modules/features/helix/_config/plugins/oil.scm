@@ -136,6 +136,14 @@
 ;; "BadSyntax: TailCall - Application not a procedure" on the status line, and
 ;; confusingly the buffer still opens and still works, because the error lands
 ;; after oil-open has already done its job.
+;;
+;; The @doc matters beyond documentation: it is what the space-menu popup shows
+;; for this binding. keybindings->docs reads the docstring of whatever `:oil`
+;; resolves to, and since this wrapper shadows the cog's own `oil`, it is this
+;; comment that gets picked up rather than oil's "Open oil file manager". Without
+;; it the row falls back to helix's "Undocumented plugin command".
+;;@doc
+;; Open the oil file manager
 (define (oil)
   (oil-open)
   (enqueue-thread-local-callback record-oil-doc-id!)
@@ -225,3 +233,28 @@
    (keymap (buffer OIL-BUFFER-NAME)
            (normal (ret ":oil-enter")
                    (backspace ":oil-up")))))
+
+;; The `space o` bindings, moved here from keybinds.nix.
+;;
+;; Not a stylistic move: only the steel keymap path attaches documentation.
+;; merge-keybindings feeds keymap-update-documentation! the `@doc` of every
+;; bound command, so these rows read "Open the oil file manager" and "Toggle
+;; visibility of hidden (dot) files and directories". Bound from the editor
+;; config instead, they come out as "Undocumented plugin command" -- the
+;; fallback in MappableCommand::from_str for any `:command` that is not in
+;; TYPABLE_COMMAND_MAP, which is every steel command.
+;;
+;; What this does NOT fix, because nothing can: the `o` row in the parent
+;; `space` menu. A submenu's description is its KeyTrieNode name, that field is
+;; #[serde(skip)], and update_documentation only walks MappableCommand leaves --
+;; so there is no way to set it from config or from steel. An empty description
+;; renders as no row at all rather than a blank one, because Info::new skips a
+;; key whose desc yields no lines. `space o` works; it is simply not listed.
+;;
+;; Deferred and separate from the buffer keymap above so that a failure in
+;; either one cannot take the other down with it.
+(enqueue-thread-local-callback
+ (lambda ()
+   (keymap (global)
+           (normal (space (o (o ":oil")
+                             ("." ":oil-toggle-hidden")))))))
