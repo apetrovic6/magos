@@ -34,3 +34,6 @@
 ;; than "Undocumented plugin command"; that only helps steel commands, not
 ;; native ones. The installer defers its own registration.
 (connect-install-keybindings!)
+
+(require "scooter/scooter.scm")
+(require "scopeline/scopeline.scm")

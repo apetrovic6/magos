@@ -1,6 +1,19 @@
 {
   language = [
     {
+      # .connect is our own extension for connect.hx; .http is the
+      # vscode-restclient convention the format extends.
+      name = "http";
+      scope = "source.http";
+      file-types = ["http" "connect"];
+      comment-token = "#";
+      injection-regex = "http";
+      indent = {
+        tab-width = 2;
+        unit = "  ";
+      };
+    }
+    {
       name = "nix";
       language-servers = ["nixd"];
       # `-` is load-bearing: it puts alejandra in stdin->stdout mode, which is

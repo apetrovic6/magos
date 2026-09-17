@@ -24,6 +24,9 @@
     (p.helix-file-watcher.overrideAttrs (old: {
       meta = old.meta // {license = lib.licenses.mit;};
     }))
+
+    p.scooter
+    p.scopeline
   ];
 
   # Each plugin may declare `pluginDependencies`; walk the closure so a cog
@@ -89,6 +92,42 @@
     # helix.scm has to exist even though we keep it empty: when it is missing
     # helix prints "Unable to find the `helix.scm` file, creating...." to
     # stdout on every launch, which scribbles over the TUI.
+
+    # Helix ships no `http` grammar, so .http/.connect files would otherwise
+    # have no highlighting at all. This is an ADDITIVE runtime dir, not a
+    # replacement: helix searches every runtime dir in priority order and takes
+    # the first file that exists (find_runtime_file, helix-loader/src/lib.rs),
+    # with HELIX_RUNTIME ranked above the HELIX_DEFAULT_RUNTIME baked into the
+    # binary at build time. So holding only the one grammar here leaves the
+    # stock runtime -- themes, tutor, every other grammar -- reachable.
+    #
+    # The grammar derivation names the shared object `parser`; helix dlopens
+    # `grammars/<name>.so` where <name> is the language's grammar field, which
+    # defaults to the language name.
+    httpRuntime = let
+      grammar = pkgs.tree-sitter-grammars.tree-sitter-http;
+    in
+      pkgs.runCommand "helix-runtime-http" {} ''
+        mkdir -p $out/grammars $out/queries/http
+        cp ${grammar}/parser $out/grammars/http.so
+        cp ${grammar}/queries/*.scm $out/queries/http/
+        chmod -R u+w $out/queries
+
+        # The queries ship for neovim, and `#offset!` is an nvim-only predicate.
+        # Helix rejects the whole file over it -- "unknown predicate #offset!",
+        # "Failed to compile highlights for 'http'" -- which loses every
+        # injection, not just the one rule. Dropping those lines keeps the rest;
+        # the cost is that an injected `> {% .. %}` script region includes its
+        # own delimiters, since offsetting them away is exactly what the
+        # predicate did.
+        #
+        # Only the predicate call is removed, not the line: the second one ends
+        # with the rule's own closing parens, and deleting the line took those
+        # with it -- leaving "invalid query syntax", which fails exactly as
+        # loudly as the thing it was meant to fix.
+        sed -i 's/(#offset![^)]*)//g' $out/queries/http/injections.scm
+      '';
+
     steelConfig = pkgs.runCommand "helix-steel-config" {} ''
       mkdir -p $out/plugins
       touch $out/helix.scm
@@ -146,6 +185,10 @@
       # This one can stay read-only: helix writes here only to create helix.scm
       # and init.scm when they are missing, and we ship both.
       env.HELIX_STEEL_CONFIG = "${steelConfig}";
+
+      # Additive: ranked above the runtime baked into the binary, not instead
+      # of it. See httpRuntime above.
+      env.HELIX_RUNTIME = "${httpRuntime}";
       runShell = [". ${seedSteelHome}"];
     };
 in {
