@@ -9,13 +9,23 @@
 
     wrapper-modules.url = "github:BirdeeHub/nix-wrapper-modules";
 
-    # Pinned to the last nixpkgs carrying opencode 1.18.29. 1.18.30 throws
+    # Pins the whole opencode build, and with it bun -- bun is the actual
+    # culprit, not opencode. Every prompt dies with
     #   TypeError: undefined is not an object (evaluating 'a.name')
     #     at SystemPrompt.environment
-    # on every prompt, reproducible with OPENCODE_CONFIG={} in an empty
-    # directory -- no MCP, no plugins, no project config needed. Verified that
-    # 1.18.29 works against the identical config. Came in via the 2026-09-17
-    # flake update (nixpkgs 8ce4ef6c -> b1b87598). Drop once upstream fixes it.
+    # reproducible with OPENCODE_CONFIG={} in an empty directory, no MCP,
+    # plugins or project config needed.
+    #
+    # The 2026-09-17 flake update (nixpkgs 8ce4ef6c -> b1b87598) moved two
+    # things at once: opencode 1.18.29 -> 1.18.30 AND bun 1.3.13 -> 1.4.2.
+    # Measured:
+    #   opencode 1.18.29 + bun 1.3.13  works
+    #   opencode 1.18.30 + bun 1.4.2   fails
+    #   opencode 1.18.29 + bun 1.4.2   fails   <- source constant, bun alone
+    # So bun 1.4.2 is sufficient to break it. NOT tested: 1.18.30 + bun 1.3.13,
+    # so bun is not proven necessary. opencode is built with `bun build
+    # --compile`, so the runtime is baked in and the nixpkgs pin covers both.
+    # Retest against a newer bun before dropping this.
     nixpkgs-opencode.url = "github:nixos/nixpkgs/8ce4ef6cb6f871616146b9fe26d2a5ae594e94fe";
 
     hyprland.url = "github:hyprwm/Hyprland";

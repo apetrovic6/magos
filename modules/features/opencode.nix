@@ -10,7 +10,7 @@ in {
       inherit pkgs;
 
       # Pinned: see the nixpkgs-opencode comment in flake.nix. Without this the
-      # wrapper defaults to pkgs.opencode, which is 1.18.30 and broken.
+      # wrapper defaults to pkgs.opencode, built against a bun that breaks it.
       package = inputs.nixpkgs-opencode.legacyPackages.${pkgs.system}.opencode;
 
       settings = {
