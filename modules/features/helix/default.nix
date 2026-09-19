@@ -141,16 +141,22 @@
     # dropped next to config.toml. helix only looks for queries under
     # <runtime>/queries/<lang>/, and its config-relative runtime dir is
     # config_dir()/runtime -- NOT config_dir() itself, so a copy into
-    # hx-config/helix/queries is never read. Joining it into HELIX_RUNTIME below
-    # keeps one mechanism instead of two.
+    # hx-config/helix/queries is never read.
     #
-    # queries/rust/injections.scm is a full vendored copy of the stock file:
-    # helix takes the first runtime dir that has a given query file and does not
-    # merge, so a partial file would silently drop rustdoc, format_args!, sqlx
-    # and the rest. See the header in that file.
+    # queries/rust/injections.scm is assembled rather than stored: helix takes
+    # the first runtime dir that has a given query file and does not merge
+    # across dirs (read_query -> load_runtime_file builds one path), so adding
+    # the `view!` rule means shipping the stock rules with it or silently
+    # dropping rustdoc, format_args!, sqlx, regex, json, html! and slint!.
+    # Concatenating them from HELIX_DEFAULT_RUNTIME -- the runtime of the very
+    # helix being wrapped -- means a bump brings its own rules along and there
+    # is no vendored copy to fall out of date.
     customQueries = pkgs.runCommand "helix-custom-queries" {} ''
-      mkdir -p $out/queries
+      mkdir -p $out/queries/rust
       cp -r ${./_config/queries}/. $out/queries
+      cat ${hxPkgs.helix.HELIX_DEFAULT_RUNTIME}/queries/rust/injections.scm \
+          ${./_config/rust-view-injection.scm} \
+        > $out/queries/rust/injections.scm
     '';
 
     steelConfig = pkgs.runCommand "helix-steel-config" {} ''
