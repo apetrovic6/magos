@@ -942,6 +942,7 @@
         "nixpkgs-opencode": "nixpkgs-opencode",
         "noctalia": "noctalia",
         "stylix": "stylix",
+        "tree-sitter-rstml": "tree-sitter-rstml",
         "treefmt-nix": "treefmt-nix_2",
         "walker": "walker",
         "wrapper-modules": "wrapper-modules"
@@ -1159,6 +1160,27 @@
       "original": {
         "owner": "tinted-theming",
         "repo": "base16-zed",
+        "type": "github"
+      }
+    },
+    "tree-sitter-rstml": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1722128477,
+        "narHash": "sha256-q66XIPssd8b3kjL1SDq8p23Zyo2BMBARPAXZ2TiAXPU=",
+        "owner": "rayliwell",
+        "repo": "tree-sitter-rstml",
+        "rev": "07a8e3b9bda09b648a6ccaca09e15dea3adf956f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "rayliwell",
+        "ref": "v2.0.0",
+        "repo": "tree-sitter-rstml",
         "type": "github"
       }
     },

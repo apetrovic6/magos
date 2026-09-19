@@ -128,6 +128,31 @@
         sed -i 's/(#offset![^)]*)//g' $out/queries/http/injections.scm
       '';
 
+    # tree-sitter-rstml: external grammar for Leptos .rshtml / .rs.html files.
+    # Uses the tree-sitter-rstml flake which provides pre-built grammars
+    # via nixpkgs' tree-sitter.buildGrammar with correct API versioning.
+    rstmlRuntime = pkgs.runCommand "helix-runtime-rstml" {} ''
+      mkdir -p $out/grammars $out/queries/rstml
+      cp ${inputs.tree-sitter-rstml.packages.${pkgs.system}.tree-sitter-grammars.rstml}/parser $out/grammars/rstml.so
+      cp ${inputs.tree-sitter-rstml.packages.${pkgs.system}.tree-sitter-grammars.rstml}/queries/*.scm $out/queries/rstml/
+    '';
+
+    # Injection queries, shaped to be another runtime dir rather than something
+    # dropped next to config.toml. helix only looks for queries under
+    # <runtime>/queries/<lang>/, and its config-relative runtime dir is
+    # config_dir()/runtime -- NOT config_dir() itself, so a copy into
+    # hx-config/helix/queries is never read. Joining it into HELIX_RUNTIME below
+    # keeps one mechanism instead of two.
+    #
+    # queries/rust/injections.scm is a full vendored copy of the stock file:
+    # helix takes the first runtime dir that has a given query file and does not
+    # merge, so a partial file would silently drop rustdoc, format_args!, sqlx
+    # and the rest. See the header in that file.
+    customQueries = pkgs.runCommand "helix-custom-queries" {} ''
+      mkdir -p $out/queries
+      cp -r ${./_config/queries}/. $out/queries
+    '';
+
     steelConfig = pkgs.runCommand "helix-steel-config" {} ''
       mkdir -p $out/plugins
       touch $out/helix.scm
@@ -192,8 +217,12 @@
       env.HELIX_STEEL_CONFIG = "${steelConfig}";
 
       # Additive: ranked above the runtime baked into the binary, not instead
-      # of it. See httpRuntime above.
-      env.HELIX_RUNTIME = "${httpRuntime}";
+      # of it. See httpRuntime / rstmlRuntime above. helix searches every
+      # runtime dir in priority order, so we chain them with a join.
+      env.HELIX_RUNTIME = "${pkgs.symlinkJoin {
+        name = "helix-runtime-custom";
+        paths = [ httpRuntime rstmlRuntime customQueries ];
+      }}";
       runShell = [". ${seedSteelHome}"];
     };
 in {

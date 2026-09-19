@@ -78,6 +78,11 @@
     };
 
     treefmt-nix.url = "github:numtide/treefmt-nix";
+
+    tree-sitter-rstml = {
+      url = "github:rayliwell/tree-sitter-rstml/v2.0.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs @ {

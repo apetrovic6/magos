@@ -70,6 +70,25 @@
         unit = "  ";
       };
     }
+    {
+      # Injection-only: reached from the `view!` rule in
+      # _config/queries/rust/injections.scm, never by filename. `.rs` stays the
+      # `rust` language, with rust-analyzer and the stock Rust grammar intact --
+      # this grammar could not stand in for it anyway, its root rule is
+      # `choice($.delim_nodes, repeat1($._node_except_block))`, i.e. markup only.
+      #
+      # `injection-regex` is what `(#set! injection.language "rstml")` actually
+      # matches on; the `name` is not consulted.
+      name = "rstml";
+      scope = "source.rstml";
+      file-types = [];
+      injection-regex = "rstml";
+      grammar = "rstml";
+      indent = {
+        tab-width = 4;
+        unit = "    ";
+      };
+    }
   ];
 
   # No args: the server speaks LSP over plain stdio. It has no configurable
