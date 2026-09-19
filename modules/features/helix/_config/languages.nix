@@ -51,12 +51,43 @@
       name = "scheme";
       language-servers = ["steel-language-server"];
     }
+    {
+      # No `grammar`: Helix 25.07 ships no Cedar tree-sitter grammar, so this
+      # buys file-type detection and the language server, not highlighting.
+      # Cedar files render as plain text with LSP diagnostics over them.
+      name = "cedar";
+      scope = "source.cedar";
+      # `.cedarschema` too: the schema is what makes the server's validation
+      # worth having, and it speaks both.
+      file-types = ["cedar" "cedarschema"];
+      language-servers = ["cedar-language-server"];
+      # `//`, not `#` — from Cedar's own lexer:
+      #     r"//[^\n\r]*[\n\r]*" => { },  // Skip `// comments`
+      # A `#` would insert something its parser rejects.
+      comment-token = "//";
+      indent = {
+        tab-width = 2;
+        unit = "  ";
+      };
+    }
   ];
 
   # No args: the server speaks LSP over plain stdio. It has no configurable
   # options either -- its only knob is STEEL_LSP_HOME, which overrides the
   # $STEEL_HOME/lsp directory it reads helix's generated builtin stubs from.
   language-server.steel-language-server.command = "steel-language-server";
+
+  # Plain stdio, no args — verified by handing it an LSP `initialize` and
+  # getting a correctly framed reply.
+  #
+  # A bare command name rather than `${pkgs.cedar}/bin/...` on purpose. The
+  # wrapper appends its own tools to PATH (`wrapperSuffixEnv PATH`) and leaves
+  # the inherited PATH ahead of them, so this resolves to whatever the current
+  # project provides. `cedar` is therefore NOT in `runtimePkgs`: it lives in the
+  # devenv of projects that use it, and Helix has to be launched from inside
+  # that shell. Started from a plain terminal the server is simply not found —
+  # Helix logs it to ~/.cache/helix/helix.log and opens the file anyway.
+  language-server.cedar-language-server.command = "cedar-language-server";
 
   language-server.yaml-language-server = {
     command = "yaml-language-server";
