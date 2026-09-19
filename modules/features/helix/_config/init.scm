@@ -37,3 +37,11 @@
 
 (require "scooter/scooter.scm")
 (require "scopeline/scopeline.scm")
+
+;; Only clip the top row when scopeline actually has a scope to show.
+;;
+;; always-reserved? defaults to #t, which calls set-editor-clip-top! with 1
+;; unconditionally -- one row taken off the top of every pane, whether or not
+;; there is anything to put in it. That hides line 1 everywhere, which is how
+;; the connect.hx response header went missing.
+(scopeline-configure! #:always-reserved? #f)
