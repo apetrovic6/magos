@@ -51,23 +51,34 @@ the same two files.
 
 ## 0007 is ours: DAP state for Steel
 
-`0007-add-steel-api-for-dap-frame-and-variables` adds two Steel-callable
-functions to `helix/core/misc` — `dap-current-frame`, returning the active
-stack frame as `(path line column)`, and `dap-frame-variables`, returning that
-frame's top-level variables as a flat list of `(name type value)` string
-triples, scopes flattened in adapter order. The traversal is copied from
-`dap_variables` (`helix-term/src/commands/dap.rs`), driven synchronously with
-`block_on` from the binding itself — the same round-trips as the existing
-command, no extra requests and no children (`variablesReference`) fetched.
-Every guard (no debug session, target running rather than stopped, no frame,
-failed request) returns `#f` / `'()` **silently**, unlike the command's status
-messages, because the consumer is a plugin polling on every
-selection-did-change; that is what the stop trigger of the inline-values
-plugin needs (stopping already moves the cursor, and the cursor move fires
-Steel's `selection-did-change` hook).
+`0007-add-steel-api-for-dap-frame-scopes-and-variables` adds three
+Steel-callable functions to `helix/core/misc`: `dap-current-frame`, returning
+the active stack frame as `(path line column)`; `dap-scopes`, returning that
+frame's scopes as `(name reference expensive)`; and `dap-variables`, returning
+the variables under one reference as `(name type value reference)`. The
+traversal is copied from the `dap_variables` command
+(`helix-term/src/commands/dap.rs`), driven synchronously with `block_on` from
+the binding itself. Every guard (no debug session, target running rather than
+stopped, no frame, failed request) returns `#f` / `'()` **silently**, unlike the
+command's status messages, because the consumer is a plugin polling on every
+selection-did-change; that is what the stop trigger of the inline-values plugin
+needs (stopping already moves the cursor, and the cursor move fires Steel's
+`selection-did-change` hook).
+
+Scopes and variables are two calls rather than one flattened list so a caller
+fetches only what it draws. Measured on a codelldb stop with four locals: all
+scopes flattened is 11,529 bytes over 5 DAP round-trips, of which the three
+register scopes are ~95%; the Local scope alone is 322 bytes over 2. Which
+scope that is stays the caller's decision, because the names are
+adapter-specific (codelldb `Local`, debugpy `Locals`, delve
+`Locals`/`Arguments`). The DAP `expensive` flag is passed through but is **not**
+a usable filter here — codelldb reports `false` for every scope, `Registers`
+included. A variable's own reference is returned too, which is what expanding a
+struct into its fields would use.
 
 It is local rather than upstream because the only consumer is the Steel inline
-plugin this stack is built for: there is no equivalent of a Steel plugin
+plugin this stack is built for
+: there is no equivalent of a Steel plugin
 upstream to receive it, and Helix's own issue #5927 (inline values, open since
 2023) is shaped around editor internals instead. If a clean upstream version
 ever emerges, drop this patch.

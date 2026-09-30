@@ -1,0 +1,241 @@
+From 699023a727855eb3828b6b49ea5057005e0b1e9b Mon Sep 17 00:00:00 2001
+From: apetrovic <petrovicante6@gmail.com>
+Date: Wed, 30 Sep 2026 11:51:35 +0200
+Subject: [PATCH] add steel api for dap frame, scopes and variables
+
+Exposes the active debug stack frame and the DAP variable tree to Steel as
+dap-current-frame, dap-scopes and dap-variables, registered in the
+helix/core/misc module. The traversal mirrors the dap_variables command
+(commands/dap.rs) and issues requests synchronously with block_on from the
+binding itself - the direct approach, no cached snapshot. Every guard (no
+session, target running, no frame, failed request) returns #f / '() silently
+instead of a status message, since the plugin hot path polls on every
+selection change.
+
+Scopes and variables are separate calls rather than one flattened list so a
+caller fetches only what it will use. On a codelldb stop the register scopes
+are 95% of the payload - 10.9 KB of 11.5 KB measured, one DAP round-trip each -
+and an inline-value plugin draws none of it. Reading only the Local scope is
+2 round-trips and ~571 bytes instead of 5 and 11.5 KB.
+
+Which scope that is stays the caller's decision: the names are adapter-specific
+(codelldb Local, debugpy Locals, delve Locals/Arguments), so filtering here
+would put a language-specific choice in a language-agnostic layer. The DAP
+`expensive` flag is passed through but is not a usable filter - codelldb
+reports false for every scope, Registers included. A variable's own reference
+is returned too, which is what expanding a struct into its fields would use.
+---
+ helix-term/src/commands/engine/steel/misc.scm |  42 ++++++
+ helix-term/src/commands/engine/steel/mod.rs   | 129 ++++++++++++++++++
+ 2 files changed, 171 insertions(+)
+
+diff --git a/helix-term/src/commands/engine/steel/misc.scm b/helix-term/src/commands/engine/steel/misc.scm
+index 52dec7d..553d9ae 100644
+--- a/helix-term/src/commands/engine/steel/misc.scm
++++ b/helix-term/src/commands/engine/steel/misc.scm
+@@ -393,6 +393,48 @@ (provide remove-inlay-hint-by-id)
+ ;;
+ (define remove-inlay-hint-by-id helix.remove-inlay-hint-by-id)
+ 
++(provide dap-current-frame)
++;;@doc
++;;
++;;When the debugger is stopped, returns the active stack frame as
++;;(path line column). Returns #f when there is no debug session, the target
++;;is running, or the frame has no source path.
++;;
++;;```scheme
++;;(dap-current-frame) -> (or/c #f (list/c string? integer? integer?))
++;;```
++;;
++(define dap-current-frame helix.dap-current-frame)
++
++(provide dap-scopes)
++;;@doc
++;;
++;;When the debugger is stopped, returns the active frame's scopes as a list of
++;;(name reference expensive). The reference is what dap-variables takes. Which
++;;scope to read is yours to pick: the names are adapter-specific (codelldb says
++;;Local, debugpy says Locals), and expensive is not a useful filter - codelldb
++;;reports #f for every scope, Registers included. Returns '() when not stopped.
++;;
++;;```scheme
++;;(dap-scopes) -> (listof (list/c string? integer? boolean?))
++;;```
++;;
++(define dap-scopes helix.dap-scopes)
++
++(provide dap-variables)
++;;@doc
++;;
++;;The variables under one reference - a scope's, from dap-scopes, or a
++;;variable's own to expand its fields. Each is (name type value reference):
++;;type is "" when the adapter omits it, and reference is 0 for a leaf, non-zero
++;;when it has children. Issues one DAP request; throttle on hot hooks.
++;;
++;;```scheme
++;;(dap-variables reference) -> (listof (list/c string? string? string? integer?))
++;;```
++;;
++(define dap-variables helix.dap-variables)
++
+ (provide fuzzy-match)
+ ;;@doc
+ ;; Convenience function to easily fuzzy match
+diff --git a/helix-term/src/commands/engine/steel/mod.rs b/helix-term/src/commands/engine/steel/mod.rs
+index e28aa7a..097d460 100644
+--- a/helix-term/src/commands/engine/steel/mod.rs
++++ b/helix-term/src/commands/engine/steel/mod.rs
+@@ -22,6 +22,7 @@
+     Range, Selection, Tendril, Transaction,
+ };
+ use helix_event::register_hook;
++use helix_lsp::block_on;
+ use helix_lsp::jsonrpc;
+ use helix_view::{
+     annotations::diagnostics::DiagnosticFilter,
+@@ -4078,6 +4079,9 @@ fn load_misc_api(engine: &mut Engine, generate_sources: bool) {
+         .register_fn_with_ctx(CTX, "clear-decorations!", steel_clear_decorations)
+         .register_fn_with_ctx(CTX, "remove-inlay-hint", remove_inlay_hint)
+         .register_fn_with_ctx(CTX, "remove-inlay-hint-by-id", remove_inlay_hint_by_id)
++        .register_fn_with_ctx(CTX, "dap-current-frame", dap_current_frame)
++        .register_fn_with_ctx(CTX, "dap-scopes", dap_scopes)
++        .register_fn_with_ctx(CTX, "dap-variables", dap_variables)
+         .register_fn("fuzzy-match", fuzzy_match);
+ 
+     if generate_sources {
+@@ -5909,6 +5913,131 @@ pub fn remove_inlay_hint(cx: &mut Context, char_index: usize, _completion: Steel
+     true
+ }
+ 
++// Steel's empty list: every accessor below reports "nothing to show" this
++// way rather than erroring, so a plugin can call them unconditionally.
++fn empty_steel_list() -> SteelVal {
++    SteelVal::ListV(Vec::<SteelVal>::new().into_iter().collect())
++}
++
++// The guards mirror the `dap_variables` COMMAND (helix-term/src/commands/dap.rs), but return
++// nothing instead of setting status messages: a plugin polls these on every
++// selection-did-change, so the not-debugging path must stay silent.
++fn active_debugger_frame<'a>(
++    debugger: &'a helix_dap::Client,
++) -> Option<&'a helix_dap::StackFrame> {
++    // `thread_id` is None while the target is running rather than stopped.
++    let (Some(active_frame), Some(thread_id)) = (debugger.active_frame, debugger.thread_id) else {
++        return None;
++    };
++    debugger
++        .stack_frames
++        .get(&thread_id)?
++        .get(active_frame)
++}
++
++// "dap-current-frame",
++pub fn dap_current_frame(cx: &mut Context) -> SteelVal {
++    let Some(debugger) = cx.editor.debug_adapters.get_active_client() else {
++        return SteelVal::BoolV(false);
++    };
++    let Some(frame) = active_debugger_frame(debugger) else {
++        return SteelVal::BoolV(false);
++    };
++    let Some(path) = frame
++        .source
++        .as_ref()
++        .and_then(|source| source.path.as_ref())
++    else {
++        return SteelVal::BoolV(false);
++    };
++
++    SteelVal::ListV(
++        vec![
++            path.display().to_string().into_steelval().unwrap(),
++            frame.line.into_steelval().unwrap(),
++            frame.column.into_steelval().unwrap(),
++        ]
++        .into_iter()
++        .collect(),
++    )
++}
++
++// "dap-scopes",
++// One (name reference expensive) triple per scope of the active frame; the
++// reference is what dap-variables takes.
++//
++// Nothing is filtered here. Which scope is worth fetching is the plugin's call:
++// the names are adapter-specific (codelldb says Local, debugpy says Locals,
++// delve splits Locals/Arguments), so choosing one in the editor would bake a
++// language-specific decision into a language-agnostic layer. `expensive` is
++// reported for the same reason, though it is not the signal it looks like --
++// codelldb sets it false on every scope, Registers included.
++pub fn dap_scopes(cx: &mut Context) -> SteelVal {
++    let Some(debugger) = cx.editor.debug_adapters.get_active_client() else {
++        return empty_steel_list();
++    };
++    let Some(frame) = active_debugger_frame(debugger) else {
++        return empty_steel_list();
++    };
++    let Ok(scopes) = block_on(debugger.scopes(frame.id)) else {
++        return empty_steel_list();
++    };
++
++    SteelVal::ListV(
++        scopes
++            .into_iter()
++            .map(|scope| {
++                SteelVal::ListV(
++                    vec![
++                        scope.name.into_steelval().unwrap(),
++                        scope.variables_reference.into_steelval().unwrap(),
++                        scope.expensive.into_steelval().unwrap(),
++                    ]
++                    .into_iter()
++                    .collect(),
++                )
++            })
++            .collect(),
++    )
++}
++
++// "dap-variables",
++// The variables under one reference: a scope's, from dap-scopes, or a
++// variable's own to expand a struct into its fields. One (name type value
++// reference) entry each - type is "" when the adapter omits it, and reference is
++// 0 for a leaf, non-zero when there are children to expand with another call.
++//
++// Fetching per reference rather than flattening every scope is what keeps this
++// affordable on a hot hook: on a codelldb stop the register scopes are 95% of
++// the payload (10.9 of 11.5 KB measured) and cost a DAP round-trip each, for
++// data an inline-value plugin never draws.
++pub fn dap_variables(cx: &mut Context, variables_reference: usize) -> SteelVal {
++    let Some(debugger) = cx.editor.debug_adapters.get_active_client() else {
++        return empty_steel_list();
++    };
++    let Ok(variables) = block_on(debugger.variables(variables_reference)) else {
++        return empty_steel_list();
++    };
++
++    SteelVal::ListV(
++        variables
++            .into_iter()
++            .map(|var| {
++                SteelVal::ListV(
++                    vec![
++                        var.name.into_steelval().unwrap(),
++                        var.ty.unwrap_or_default().into_steelval().unwrap(),
++                        var.value.into_steelval().unwrap(),
++                        var.variables_reference.into_steelval().unwrap(),
++                    ]
++                    .into_iter()
++                    .collect(),
++                )
++            })
++            .collect(),
++    )
++}
++
+ pub fn insert_string(cx: &mut Context, string: SteelString) {
+     let (view, doc) = current!(cx.editor);
+ 
+-- 
+2.55.0
+
