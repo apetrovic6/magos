@@ -58,29 +58,43 @@ in {
               "qwen36-35b-q4" = {
                 name = "Qwen3.6-35B-A3B IQ4_XS (local)";
                 limit = {
-                  context = 65536;
+                  context = 131072;
                   output = 8192;
                 };
               };
 
-              # Same weights as -q4 above, lower precision, fits entirely in
-              # VRAM. Reasoning model too, so the same raised output budget.
-              "qwen36-35b-q3" = {
-                name = "Qwen3.6-35B-A3B IQ3_XXS (local)";
-                limit = {
-                  context = 65536;
-                  output = 8192;
-                };
-              };
+              # # Same weights as -q4 above, lower precision, fits entirely in
+              # # VRAM. Reasoning model too, so the same raised output budget.
+              # "qwen36-35b-q3" = {
+              #   name = "Qwen3.6-35B-A3B IQ3_XXS (local)";
+              #   limit = {
+              #     context = 65536;
+              #     output = 8192;
+              #   };
+              # };
 
-              # Dense 24B, not a reasoning model -- no thinking tokens to pay
-              # for, so the standard output budget is enough. Expect it to be
-              # markedly slower than the A3B models: it activates all 24B per
-              # token against their ~3B.
-              "devstral-24b" = {
-                name = "Devstral Small 2 24B (local)";
+              # DISABLED -- see machines/phalanx/llama-swap.nix in omnissiah.
+              # Spills out of VRAM even at 32768 context; 3.7 tok/s decode
+              # against 67 for qwen36-35b-q4 on the same 28k prompt.
+              # # Dense 24B, not a reasoning model -- no thinking tokens to pay
+              # # for, so the standard output budget is enough. Expect it to be
+              # # markedly slower than the A3B models: it activates all 24B per
+              # # token against their ~3B.
+              # "devstral-24b" = {
+              #   name = "Devstral Small 2 24B (local)";
+              #   limit = {
+              #     context = 32768;
+              #     output = 8192;
+              #   };
+              # };
+
+              # Mostly offloaded to system RAM (~82GB model, ~17.5GB VRAM), so
+              # expect it to be the slowest entry here, prompt processing most
+              # of all. Context matches ctxSize in llama-swap.nix.
+              "qwen38-flash-q3" = {
+                name = "Qwen3.8-Flash-Next IQ3_XXS (local, RAM-offloaded)";
                 limit = {
-                  context = 65536;
+                  context = 131072;
                   output = 8192;
                 };
               };
