@@ -1,0 +1,161 @@
+From a73ece88c305c96794bd959eb686245188f1d171 Mon Sep 17 00:00:00 2001
+From: apetrovic <petrovicante6@gmail.com>
+Date: Wed, 30 Sep 2026 11:51:35 +0200
+Subject: [PATCH] add steel api for dap frame and variables
+
+Exposes the active debug stack frame and that frame's top-level variables to
+Steel as dap-current-frame and dap-frame-variables, registered in the
+helix/core/misc module. The traversal mirrors dap_variables (commands/dap.rs)
+and issues the requests synchronously with block_on from the binding itself -
+the direct approach, no cached snapshot. Every guard (no session, target
+running, no frame, failed request) returns #f / '() silently instead of a
+status message, since the plugin hot path polls on every selection change.
+---
+ helix-term/src/commands/engine/steel/misc.scm | 27 +++++++
+ helix-term/src/commands/engine/steel/mod.rs   | 78 +++++++++++++++++++
+ 2 files changed, 105 insertions(+)
+
+diff --git a/helix-term/src/commands/engine/steel/misc.scm b/helix-term/src/commands/engine/steel/misc.scm
+index 1dca13d7..bb20f8b5 100644
+--- a/helix-term/src/commands/engine/steel/misc.scm
++++ b/helix-term/src/commands/engine/steel/misc.scm
+@@ -320,6 +320,33 @@ (provide remove-inlay-hint-by-id)
+ ;;
+ (define remove-inlay-hint-by-id helix.remove-inlay-hint-by-id)
+ 
++(provide dap-current-frame)
++;;@doc
++;;
++;;When the debugger is stopped, returns the active stack frame as
++;;(path line column). Returns #f when there is no debug session, the target
++;;is running, or the frame has no source path.
++;;
++;;```scheme
++;;(dap-current-frame) -> (or/c #f (list/c string? integer? integer?))
++;;```
++;;
++(define dap-current-frame helix.dap-current-frame)
++
++(provide dap-frame-variables)
++;;@doc
++;;
++;;When the debugger is stopped, returns the active frame's top-level variables
++;;as a list of (name type value) strings, scopes flattened in adapter order;
++;;type is "" when the adapter omits it. Returns '() when not stopped.
++;;Issues DAP requests - throttle calls from hot hooks.
++;;
++;;```scheme
++;;(dap-frame-variables) -> (listof (list/c string? string? string?))
++;;```
++;;
++(define dap-frame-variables helix.dap-frame-variables)
++
+ (provide fuzzy-match)
+ ;;@doc
+ ;; Convenience function to easily fuzzy match
+diff --git a/helix-term/src/commands/engine/steel/mod.rs b/helix-term/src/commands/engine/steel/mod.rs
+index 2fd15260..2672c935 100644
+--- a/helix-term/src/commands/engine/steel/mod.rs
++++ b/helix-term/src/commands/engine/steel/mod.rs
+@@ -21,6 +21,7 @@
+     Range, Selection, Tendril, Transaction,
+ };
+ use helix_event::register_hook;
++use helix_lsp::block_on;
+ use helix_lsp::jsonrpc;
+ use helix_view::{
+     annotations::diagnostics::DiagnosticFilter,
+@@ -4068,6 +4069,8 @@ fn load_misc_api(engine: &mut Engine, generate_sources: bool) {
+         .register_fn_with_ctx(CTX, "add-inlay-hint", add_inlay_hint)
+         .register_fn_with_ctx(CTX, "remove-inlay-hint", remove_inlay_hint)
+         .register_fn_with_ctx(CTX, "remove-inlay-hint-by-id", remove_inlay_hint_by_id)
++        .register_fn_with_ctx(CTX, "dap-current-frame", dap_current_frame)
++        .register_fn_with_ctx(CTX, "dap-frame-variables", dap_frame_variables)
+         .register_fn("fuzzy-match", fuzzy_match);
+ 
+     if generate_sources {
+@@ -5635,6 +5638,81 @@ pub fn remove_inlay_hint(cx: &mut Context, char_index: usize, _completion: Steel
+     true
+ }
+ 
++// The guards mirror `dap_variables` (helix-term/src/commands/dap.rs), but return
++// nothing instead of setting status messages: a plugin polls these on every
++// selection-did-change, so the not-debugging path must stay silent.
++fn active_debugger_frame<'a>(
++    debugger: &'a helix_dap::Client,
++) -> Option<&'a helix_dap::StackFrame> {
++    // `thread_id` is None while the target is running rather than stopped.
++    let (Some(active_frame), Some(thread_id)) = (debugger.active_frame, debugger.thread_id) else {
++        return None;
++    };
++    debugger
++        .stack_frames
++        .get(&thread_id)?
++        .get(active_frame)
++}
++
++// "dap-current-frame",
++pub fn dap_current_frame(cx: &mut Context) -> SteelVal {
++    let Some(debugger) = cx.editor.debug_adapters.get_active_client() else {
++        return SteelVal::BoolV(false);
++    };
++    let Some(frame) = active_debugger_frame(debugger) else {
++        return SteelVal::BoolV(false);
++    };
++    let Some(path) = frame
++        .source
++        .as_ref()
++        .and_then(|source| source.path.as_ref())
++    else {
++        return SteelVal::BoolV(false);
++    };
++
++    SteelVal::ListV(
++        vec![
++            path.display().to_string().into_steelval().unwrap(),
++            frame.line.into_steelval().unwrap(),
++            frame.column.into_steelval().unwrap(),
++        ]
++        .into_iter()
++        .collect(),
++    )
++}
++
++// "dap-frame-variables",
++// Flat: one (name type value) triple per top-level variable. Scopes are
++// flattened in adapter order (codelldb: Local, Static, Global, Registers) and
++// nothing is renamed or filtered - scope policy belongs to the plugin. Children
++// (variablesReference) are not fetched: no extra DAP round-trips.
++pub fn dap_frame_variables(cx: &mut Context) -> Vec<Vec<String>> {
++    let Some(debugger) = cx.editor.debug_adapters.get_active_client() else {
++        return Vec::new();
++    };
++    let Some(frame) = active_debugger_frame(debugger) else {
++        return Vec::new();
++    };
++
++    // One scopes request and one variables request per scope, exactly as
++    // dap_variables does. Callers on hot hooks are expected to throttle.
++    let Ok(scopes) = block_on(debugger.scopes(frame.id)) else {
++        return Vec::new();
++    };
++
++    let mut variables = Vec::new();
++    for scope in &scopes {
++        let Ok(vars) = block_on(debugger.variables(scope.variables_reference)) else {
++            continue;
++        };
++        variables.extend(
++            vars.into_iter()
++                .map(|var| vec![var.name, var.ty.unwrap_or_default(), var.value]),
++        );
++    }
++    variables
++}
++
+ pub fn insert_string(cx: &mut Context, string: SteelString) {
+     let (view, doc) = current!(cx.editor);
+ 
+-- 
+2.55.0
+

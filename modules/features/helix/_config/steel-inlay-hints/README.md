@@ -34,9 +34,10 @@ config's cogs (oil, scooter, scopeline, connect.hx, helix-file-watcher) currentl
 run against. The 5 commits themselves are small (~600 lines over 12 files), so
 they are vendored onto the existing lock instead.
 
-Applied in filename order (`0001` .. `0006`); they are not independent — `0004`
+Applied in filename order (`0001` .. `0007`); they are not independent — `0004`
 and `0005` are edits to the code `0002` introduced, and `0006` edits what all of
-them introduced.
+them introduced. `0007` is unrelated to all of them — it is a separate API on
+the same two files.
 
 | patch | upstream commit |
 |---|---|
@@ -46,6 +47,30 @@ them introduced.
 | 0004 | `d6ce45ef2380d9d6887650d80cb11c78f50affb6` Add line placement for styled inlay hints |
 | 0005 | `f25de1eac72cc203e7f1e27e3a2d0a6ac612daeb` Add Steel overlay, highlight and background API |
 | 0006 | **ours, not upstream** — see below |
+| 0007 | **ours, not upstream** — see below |
+
+## 0007 is ours: DAP state for Steel
+
+`0007-add-steel-api-for-dap-frame-and-variables` adds two Steel-callable
+functions to `helix/core/misc` — `dap-current-frame`, returning the active
+stack frame as `(path line column)`, and `dap-frame-variables`, returning that
+frame's top-level variables as a flat list of `(name type value)` string
+triples, scopes flattened in adapter order. The traversal is copied from
+`dap_variables` (`helix-term/src/commands/dap.rs`), driven synchronously with
+`block_on` from the binding itself — the same round-trips as the existing
+command, no extra requests and no children (`variablesReference`) fetched.
+Every guard (no debug session, target running rather than stopped, no frame,
+failed request) returns `#f` / `'()` **silently**, unlike the command's status
+messages, because the consumer is a plugin polling on every
+selection-did-change; that is what the stop trigger of the inline-values
+plugin needs (stopping already moves the cursor, and the cursor move fires
+Steel's `selection-did-change` hook).
+
+It is local rather than upstream because the only consumer is the Steel inline
+plugin this stack is built for: there is no equivalent of a Steel plugin
+upstream to receive it, and Helix's own issue #5927 (inline values, open since
+2023) is shaped around editor internals instead. If a clean upstream version
+ever emerges, drop this patch.
 
 ## 0006 is ours (do not send it anywhere)
 

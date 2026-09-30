@@ -97,6 +97,9 @@
           # ours, not upstream: makes the decoration APIs above linear instead
           # of quadratic, see _config/steel-inlay-hints/README.md
           ./_config/steel-inlay-hints/0006-local-scale-plugin-decorations-linearly.patch
+          # ours, not upstream: reads the stopped debug frame and its variables
+          # from Steel, see _config/steel-inlay-hints/README.md
+          ./_config/steel-inlay-hints/0007-add-steel-api-for-dap-frame-and-variables.patch
         ];
     });
 
