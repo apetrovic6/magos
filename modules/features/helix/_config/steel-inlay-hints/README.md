@@ -53,9 +53,14 @@ the same two files.
 
 `0007-add-steel-api-for-dap-frame-scopes-and-variables` adds three
 Steel-callable functions to `helix/core/misc`: `dap-current-frame`, returning
-the active stack frame as `(path line column)`; `dap-scopes`, returning that
+the active stack frame as `(path line column id)`; `dap-scopes`, returning that
 frame's scopes as `(name reference expensive)`; and `dap-variables`, returning
-the variables under one reference as `(name type value reference)`. The
+the variables under one reference as `(name type value reference)`. The frame
+`id` is what makes the tuple a sound identity for "did the debugger move":
+one source line can resolve to several breakpoint locations, so a
+continue-then-re-stop can land on the same `(path line column)` with different
+values — the id changes on every stop, so comparing whole tuples cannot miss
+it. The
 traversal is copied from the `dap_variables` command
 (`helix-term/src/commands/dap.rs`), driven synchronously with `block_on` from
 the binding itself. Every guard (no debug session, target running rather than

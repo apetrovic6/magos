@@ -1,4 +1,4 @@
-From 699023a727855eb3828b6b49ea5057005e0b1e9b Mon Sep 17 00:00:00 2001
+From 313f240305629494e8a0e1d535dd41e6abe46c57 Mon Sep 17 00:00:00 2001
 From: apetrovic <petrovicante6@gmail.com>
 Date: Wed, 30 Sep 2026 11:51:35 +0200
 Subject: [PATCH] add steel api for dap frame, scopes and variables
@@ -25,15 +25,15 @@ would put a language-specific choice in a language-agnostic layer. The DAP
 reports false for every scope, Registers included. A variable's own reference
 is returned too, which is what expanding a struct into its fields would use.
 ---
- helix-term/src/commands/engine/steel/misc.scm |  42 ++++++
- helix-term/src/commands/engine/steel/mod.rs   | 129 ++++++++++++++++++
- 2 files changed, 171 insertions(+)
+ helix-term/src/commands/engine/steel/misc.scm |  44 ++++++
+ helix-term/src/commands/engine/steel/mod.rs   | 134 ++++++++++++++++++
+ 2 files changed, 178 insertions(+)
 
 diff --git a/helix-term/src/commands/engine/steel/misc.scm b/helix-term/src/commands/engine/steel/misc.scm
-index 52dec7d..553d9ae 100644
+index 52dec7da..6faa59ff 100644
 --- a/helix-term/src/commands/engine/steel/misc.scm
 +++ b/helix-term/src/commands/engine/steel/misc.scm
-@@ -393,6 +393,48 @@ (provide remove-inlay-hint-by-id)
+@@ -393,6 +393,50 @@ (provide remove-inlay-hint-by-id)
  ;;
  (define remove-inlay-hint-by-id helix.remove-inlay-hint-by-id)
  
@@ -41,11 +41,13 @@ index 52dec7d..553d9ae 100644
 +;;@doc
 +;;
 +;;When the debugger is stopped, returns the active stack frame as
-+;;(path line column). Returns #f when there is no debug session, the target
-+;;is running, or the frame has no source path.
++;;(path line column id). The id changes on every stop, even when the stop is
++;;on the same line, so comparing whole tuples tells you whether the debugger
++;;moved. Returns #f when there is no debug session, the target is running, or
++;;the frame has no source path.
 +;;
 +;;```scheme
-+;;(dap-current-frame) -> (or/c #f (list/c string? integer? integer?))
++;;(dap-current-frame) -> (or/c #f (list/c string? integer? integer? integer?))
 +;;```
 +;;
 +(define dap-current-frame helix.dap-current-frame)
@@ -83,7 +85,7 @@ index 52dec7d..553d9ae 100644
  ;;@doc
  ;; Convenience function to easily fuzzy match
 diff --git a/helix-term/src/commands/engine/steel/mod.rs b/helix-term/src/commands/engine/steel/mod.rs
-index e28aa7a..097d460 100644
+index e28aa7aa..aa1a6fb3 100644
 --- a/helix-term/src/commands/engine/steel/mod.rs
 +++ b/helix-term/src/commands/engine/steel/mod.rs
 @@ -22,6 +22,7 @@
@@ -104,7 +106,7 @@ index e28aa7a..097d460 100644
          .register_fn("fuzzy-match", fuzzy_match);
  
      if generate_sources {
-@@ -5909,6 +5913,131 @@ pub fn remove_inlay_hint(cx: &mut Context, char_index: usize, _completion: Steel
+@@ -5909,6 +5913,136 @@ pub fn remove_inlay_hint(cx: &mut Context, char_index: usize, _completion: Steel
      true
  }
  
@@ -151,6 +153,11 @@ index e28aa7a..097d460 100644
 +            path.display().to_string().into_steelval().unwrap(),
 +            frame.line.into_steelval().unwrap(),
 +            frame.column.into_steelval().unwrap(),
++            // The frame id changes on every stop, even when the stop is on the
++            // same line (one source line can resolve to several breakpoint
++            // locations). Without it a continue-then-re-stop on the same line
++            // compares equal and the caller keeps stale values on screen.
++            frame.id.into_steelval().unwrap(),
 +        ]
 +        .into_iter()
 +        .collect(),
