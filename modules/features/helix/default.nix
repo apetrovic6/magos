@@ -6,9 +6,9 @@
 }: let
   defaultTheme = "everforest_dark";
 
-  editorSettings = import ./_config/editor.nix;
+  mkEditorSettings = terminalPkg: import ./_config/editor.nix {inherit lib terminalPkg;};
   languages = import ./_config/languages.nix;
-  mkKeybinds = pkgs: import ./_config/keybinds.nix {inherit pkgs;};
+  mkKeybinds = pkgs: terminalPkg: import ./_config/keybinds.nix {inherit pkgs terminalPkg;};
 
   # Steel cogs to install. Dependencies are pulled in automatically, so listing
   # `oil` is enough to also get `notify`.
@@ -54,6 +54,10 @@
 
   makeHelixPackage = {
     pkgs,
+    # The terminal editor.terminal spawns for a debuggee, threaded through to
+    # _config/editor.nix. Same wrapped foot niri spawns; plain `foot` is not on
+    # PATH, so this cannot be a bare name.
+    terminalPkg,
     theme ? defaultTheme,
   }: let
     hxPkgs = pkgs.appendOverlays [
@@ -229,10 +233,10 @@
       # defaults to hxPkgs.helix (the steel fork straight from the overlay)
       package = patchedHelix;
       settings =
-        editorSettings
+        (mkEditorSettings terminalPkg)
         // {
           theme = theme;
-          keys = (mkKeybinds pkgs).keys;
+          keys = (mkKeybinds pkgs terminalPkg).keys;
         };
       inherit languages;
       # languages.language = language.language;
@@ -254,7 +258,13 @@
       # not an override.
       # grpcurl backs connect.hx's request scaffolding: it reads reflection and
       # prints a protojson skeleton for a message, which buf build cannot do.
-      runtimePkgs = with pkgs; [alejandra tailwindcss-language-server steel-language-server buf grpcurl];
+      # codelldb backs the rust debugger in _config/languages.nix. `.adapter` is
+      # the standalone build of the vscode extension's adapter -- it puts
+      # `bin/codelldb` on PATH and, next to the real binary, the
+      # `codelldb-launch` helper the adapter shells out to for runInTerminal
+      # (it resolves that by looking beside its own argv[0], so the two have to
+      # stay in the same store path).
+      runtimePkgs = with pkgs; [alejandra tailwindcss-language-server steel-language-server buf grpcurl vscode-extensions.vadimcn.vscode-lldb.adapter];
 
       # The wrapper already pins XDG_CONFIG_HOME to its generated config, so
       # helix would look for init.scm next to config.toml. Point it at our own
@@ -293,7 +303,14 @@ in {
     };
   };
 
-  perSystem = {pkgs, ...}: {
-    packages.helix = makeHelixPackage {inherit pkgs;};
+  perSystem = {
+    pkgs,
+    self',
+    ...
+  }: {
+    packages.helix = makeHelixPackage {
+      inherit pkgs;
+      terminalPkg = self'.packages.foot;
+    };
   };
 }

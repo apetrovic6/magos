@@ -1,5 +1,9 @@
-{pkgs}: let
+{
+  pkgs,
+  terminalPkg,
+}: let
   lib = pkgs.lib;
+  debug = import ./debug-launch.nix {inherit pkgs terminalPkg;};
 in {
   # Packages needed for keybind commands
   extraPackages = with pkgs; [
@@ -21,6 +25,22 @@ in {
       m = ":vista-toggle";
       r = ":vista-render";
     };
+    # Added into helix's own sticky debug submenu (space G), which keeps its
+    # built-in keys -- keymap nodes merge rather than replace. `l` there is the
+    # stock launcher that prompts for every parameter; this is the no-prompt
+    # version: the binary comes from whichever buffer you are in, the tty from a
+    # debug console window that is opened once and reused.
+    #
+    # One command, not a list: in a command *sequence* `:debug-start` runs
+    # without error and without effect (the same command bound on its own, or
+    # typed, works -- measured both ways), so the whole launch has to fit in a
+    # single binding.
+    #
+    # `%{buffer_name}` nests inside `%sh{...}` because the parser consumes it as
+    # one expansion token. A literal brace does not nest: a `${VAR:-x}` in there
+    # ends the `%sh{` at its own `}` and silently truncates the command, which is
+    # why neither script takes a path argument from here.
+    space.G.d = ":debug-start \"binary (tty)\" %sh{${lib.getExe debug.resolveBinary} %{buffer_name}} %sh{${lib.getExe debug.ensureConsole}}";
     C-o = [
       ":new"
       ":insert-output env XDG_CONFIG_HOME=$HOME/.config ${lib.getExe pkgs.lazygit}"

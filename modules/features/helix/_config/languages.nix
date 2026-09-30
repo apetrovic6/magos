@@ -43,6 +43,134 @@
       name = "rust";
       file-types = ["rs"];
       language-servers = ["rust-analyzer" "tailwindcss-language-server"];
+      # Replaces the lldb-dap block helix ships for rust. lldb-dap shows
+      # String/Vec/Option as raw internals unless `initCommands` imports
+      # rustc's lldb_lookup.py, and that path lives in a toolchain sysroot we
+      # have no global copy of -- rustc comes from per-project dev shells, so
+      # there is no one value to hardcode here. codelldb runs the lookup itself
+      # against the workspace toolchain.
+      debugger = {
+        name = "codelldb";
+        # codelldb speaks DAP over a socket, not stdio: helix picks a free port
+        # and substitutes it into port-arg.
+        transport = "tcp";
+        command = "codelldb";
+        port-arg = "--port {}";
+
+        # Every template below sets terminal = "console", and must. Anything
+        # else (including codelldb's default `integrated`) makes it issue a DAP
+        # runInTerminal request, and helix cannot answer one during a launch: on
+        # the `initialized` event it awaits configuration_done() inside the event
+        # handler (helix-view/src/handlers/dap.rs:389), so its event loop is
+        # blocked exactly when the reverse request arrives -- while codelldb
+        # cannot answer configurationDone until launch finishes, which is what it
+        # wants the terminal for. Nothing breaks the cycle until codelldb's
+        # hardcoded 10s terminal timeout, and by then the terminal helix finally
+        # spawns connects to a dropped listener and dies with
+        # "Error: Os { code: 111, ConnectionRefused }". Confirmed from a helix
+        # DAP log: request queued at T+0.0s, handled at T+10.1s.
+        #
+        # That is why editor.terminal in editor.nix is currently unused: it is
+        # correct, but no request reaches it in time.
+        templates = [
+          {
+            # First in the list because it is preselected in the picker, and it
+            # is the one to reach for: a debuggee that draws (a TUI) or reads
+            # stdin needs a real tty, and console mode gives it the adapter's
+            # inherited fds, i.e. helix's own terminal -- it will draw over the
+            # editor. This borrows a terminal you already have open, which is the
+            # only way to get a tty given the deadlock described above.
+            #
+            # Usage: open a spare terminal (Super+Return) and run
+            #   tty; sleep infinity
+            # The `sleep` matters -- a shell sitting at its prompt would eat the
+            # keystrokes meant for the debuggee. `tty` prints e.g. /dev/pts/7;
+            # that is what the second prompt wants. ^C there when you are done.
+            #
+            # The redirect goes through LLDB's own settings, not codelldb's
+            # `stdio` attribute: configure_stdio in codelldb (1.12.2 and master
+            # alike) applies its file actions only inside
+            # `if let Some(terminal) = &self.debuggee_terminal`, so with
+            # terminal = "console" it silently ignores `stdio` and the debuggee
+            # inherits the adapter's fds. preRunCommands run after codelldb
+            # builds the launch info and it re-reads it afterwards, so LLDB's
+            # target.{input,output,error}-path win.
+            #
+            # {1} is helix substituting the second completion answer
+            # (map_value in helix-term/src/commands/dap.rs).
+            name = "binary (tty)";
+            request = "launch";
+            completion = [
+              {
+                name = "binary";
+                completion = "filename";
+              }
+              {
+                # Shows as a `tty: ` prompt with an empty line -- helix does not
+                # prefill `default`, it only substitutes it when you submit
+                # nothing (debug_parameter_prompt in
+                # helix-term/src/commands/dap.rs), so a default here would just
+                # be a wrong answer waiting to be accepted. No completer either:
+                # the completers are filename/directory only.
+                name = "tty";
+              }
+            ];
+            args = {
+              program = "{0}";
+              preRunCommands = [
+                "settings set target.input-path {1}"
+                "settings set target.output-path {1}"
+                "settings set target.error-path {1}"
+              ];
+              sourceLanguages = ["rust"];
+              initCommands = [
+                ''script import os, sys, shutil, subprocess; _rc = shutil.which("rustc"); _sr = subprocess.run([_rc, "--print", "sysroot"], capture_output=True, text=True).stdout.strip() if _rc else ""; _etc = os.path.join(_sr, "lib/rustlib/etc") if _sr else ""; _lookup = os.path.join(_etc, "lldb_lookup.py") if _etc else ""; sys.path.insert(0, _etc) if _etc else None; lldb.debugger.HandleCommand("command script import " + _lookup) if _lookup and os.path.exists(_lookup) else None''
+              ];
+              terminal = "console";
+            };
+          }
+          {
+            name = "binary";
+            request = "launch";
+            completion = [
+              {
+                name = "binary";
+                completion = "filename";
+              }
+            ];
+            args = {
+              program = "{0}";
+              # What makes codelldb look for the toolchain's visualizers at all.
+              sourceLanguages = ["rust"];
+              # ...but its own lookup fails here ("Could not find LLDB data
+              # formatters in your Rust toolchain"): it wants
+              # $sysroot/lib/rustlib/etc/lldb_commands, and nixpkgs' rustc ships
+              # the etc/ directory without that file. codelldb 1.12.3 imports
+              # the visualizer anyway (vadimcn/codelldb#1395); nixpkgs is on
+              # 1.12.2, so do the import by hand.
+              #
+              # lldb_lookup.py self-registers the whole Rust category from
+              # __lldb_init_module, so importing it is enough -- lldb_commands
+              # would add nothing. The sysroot is resolved at session start
+              # rather than baked in, because rustc comes from whichever dev
+              # shell helix was launched in. No rustc on PATH means no import
+              # and raw internals in the variables popup, not a failed launch.
+              #
+              # Verified: without this s: String reads `{...}`, with it `"hello"`.
+              initCommands = [
+                ''script import os, sys, shutil, subprocess; _rc = shutil.which("rustc"); _sr = subprocess.run([_rc, "--print", "sysroot"], capture_output=True, text=True).stdout.strip() if _rc else ""; _etc = os.path.join(_sr, "lib/rustlib/etc") if _sr else ""; _lookup = os.path.join(_etc, "lldb_lookup.py") if _etc else ""; sys.path.insert(0, _etc) if _etc else None; lldb.debugger.HandleCommand("command script import " + _lookup) if _lookup and os.path.exists(_lookup) else None''
+              ];
+              # Mandatory; see the comment above `templates`. Note what console
+              # mode does NOT do here: it does not capture the debuggee's output.
+              # codelldb only installs file actions when it has a terminal, so
+              # the debuggee inherits the adapter's fds -- which are helix's --
+              # and anything it prints lands on top of the editor. Use this only
+              # for a binary you know stays quiet; otherwise take "binary (tty)".
+              terminal = "console";
+            };
+          }
+        ];
+      };
     }
     {
       # Helix already ships a `scheme` language (tree-sitter grammar, file-types
