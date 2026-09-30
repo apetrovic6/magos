@@ -105,6 +105,7 @@
           # ours, not upstream: reads the stopped debug frame and its variables
           # from Steel, see _config/steel-inlay-hints/README.md
           ./_config/steel-inlay-hints/0007-add-steel-api-for-dap-frame-scopes-and-variables.patch
+          ./_config/steel-inlay-hints/0008-disconnect-the-debug-adapter-when-terminate-is-unsup.patch
         ];
     });
 

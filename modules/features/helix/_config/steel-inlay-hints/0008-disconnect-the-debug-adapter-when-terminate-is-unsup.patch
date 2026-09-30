@@ -1,0 +1,70 @@
+From 16e7e28a04eafa55537e255b40c18a48247ea27d Mon Sep 17 00:00:00 2001
+From: t <t@t>
+Date: Wed, 30 Sep 2026 16:23:20 +0200
+Subject: [PATCH] disconnect the debug adapter when terminate is unsupported
+
+dap_terminate only sends a request when the adapter advertises
+supportsTerminateRequest. Otherwise it dropped the client locally and told
+the adapter nothing, so the adapter process and the debuggee under it stayed
+alive for the rest of the editor session -- one stopped process pair per
+terminate, and a TUI or GUI debuggee still holding its terminal or window.
+
+codelldb is exactly this case: it advertises supportTerminateDebuggee and
+supportsRestartRequest but not supportsTerminateRequest, so every `space G t`
+against it leaked a pair.
+
+Send a disconnect with terminateDebuggee instead. That flag is what
+supportTerminateDebuggee promises to honour, and an adapter that ignores it
+still learns the session is over rather than being left behind.
+---
+ helix-term/src/commands/dap.rs | 27 +++++++++++++++++++++++++--
+ 1 file changed, 25 insertions(+), 2 deletions(-)
+
+diff --git a/helix-term/src/commands/dap.rs b/helix-term/src/commands/dap.rs
+index f5b3c7f..c58c258 100644
+--- a/helix-term/src/commands/dap.rs
++++ b/helix-term/src/commands/dap.rs
+@@ -6,7 +6,10 @@
+ };
+ use dap::{StackFrame, Thread, ThreadStates};
+ use helix_core::syntax::config::{DebugConfigCompletion, DebugTemplate};
+-use helix_dap::{self as dap, requests::TerminateArguments};
++use helix_dap::{
++    self as dap,
++    requests::{DisconnectArguments, TerminateArguments},
++};
+ use helix_lsp::block_on;
+ use helix_view::editor::Breakpoint;
+ 
+@@ -614,7 +617,27 @@ pub fn dap_terminate(cx: &mut Context) {
+             editor.debug_adapters.unset_active_client();
+         });
+     } else {
+-        cx.editor.debug_adapters.unset_active_client();
++        // No supportsTerminateRequest: helix used to drop the client here and
++        // tell the adapter nothing, which leaves both the adapter and the
++        // debuggee running for the rest of the session -- a stopped process
++        // per terminate, and a TUI or GUI debuggee still holding its window.
++        // codelldb is one of these: it advertises supportTerminateDebuggee but
++        // not supportsTerminateRequest.
++        //
++        // Disconnect instead, asking for the debuggee to go with it. That flag
++        // is exactly what supportTerminateDebuggee promises to honour, and an
++        // adapter that ignores it still sees the session end rather than being
++        // left behind.
++        let disconnect_arguments = Some(DisconnectArguments {
++            restart: Some(false),
++            terminate_debuggee: Some(true),
++            suspend_debuggee: None,
++        });
++
++        let request = debugger.disconnect(disconnect_arguments);
++        dap_callback(cx.jobs, request, |editor, _compositor, _response: ()| {
++            editor.debug_adapters.unset_active_client();
++        });
+     }
+ }
+ 
+-- 
+2.55.0
+

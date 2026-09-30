@@ -48,6 +48,23 @@ the same two files.
 | 0005 | `f25de1eac72cc203e7f1e27e3a2d0a6ac612daeb` Add Steel overlay, highlight and background API |
 | 0006 | **ours, not upstream** — see below |
 | 0007 | **ours, not upstream** — see below |
+| 0008 | **ours, not upstream** — see below |
+
+## 0008 is ours: disconnect when terminate is unsupported
+
+`dap_terminate` only sends a request when the adapter advertises
+`supportsTerminateRequest`. Otherwise helix dropped the client locally and told
+the adapter nothing, leaving the adapter process and the debuggee under it
+alive for the rest of the editor session — one stopped pair per `space G t`,
+with a TUI or GUI debuggee still holding its terminal or window. codelldb is
+exactly that case: it advertises `supportTerminateDebuggee` and
+`supportsRestartRequest`, but not `supportsTerminateRequest`.
+
+The else branch now sends `disconnect` with `terminateDebuggee: true`, which is
+what `supportTerminateDebuggee` promises to honour. Measured before and after:
+one terminate used to leave 1 adapter + 1 debuggee running, and now leaves 0.
+Upstream has the same fix in flight as helix-editor/helix#16300; drop this when
+it lands.
 
 ## 0007 is ours: DAP state for Steel
 
