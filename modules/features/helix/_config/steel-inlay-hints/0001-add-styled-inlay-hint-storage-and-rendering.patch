@@ -1,0 +1,133 @@
+From 3ed20dd3402a3de3a6ceae6ef7a78d19191f728a Mon Sep 17 00:00:00 2001
+From: Ra77a3l3-jar <raffaelemeo77@gmail.com>
+Date: Sun, 19 Jul 2026 14:45:20 +0200
+Subject: [PATCH] Add styled inlay hint storage and rendering
+
+---
+ helix-term/src/commands/lsp.rs |  1 +
+ helix-view/src/document.rs     | 13 +++++++++++++
+ helix-view/src/theme.rs        | 22 +++++++++++++++++++++-
+ helix-view/src/view.rs         | 10 ++++++++--
+ 4 files changed, 43 insertions(+), 3 deletions(-)
+
+diff --git a/helix-term/src/commands/lsp.rs b/helix-term/src/commands/lsp.rs
+index 95201fbf3dbd..1825bb25bbb8 100644
+--- a/helix-term/src/commands/lsp.rs
++++ b/helix-term/src/commands/lsp.rs
+@@ -1476,6 +1476,7 @@ fn compute_inlay_hints_for_view(
+                     other_inlay_hints,
+                     padding_before_inlay_hints,
+                     padding_after_inlay_hints,
++                    styled_inlay_hints: Vec::new(),
+                 },
+             );
+             doc.inlay_hints_oudated = false;
+diff --git a/helix-view/src/document.rs b/helix-view/src/document.rs
+index 17d4002a10d9..a3d3ba7946eb 100644
+--- a/helix-view/src/document.rs
++++ b/helix-view/src/document.rs
+@@ -300,6 +300,12 @@ pub struct DocumentInlayHints {
+     /// added first, then the regular inlay hints, then the `after` padding.
+     pub padding_before_inlay_hints: Vec<InlineAnnotation>,
+     pub padding_after_inlay_hints: Vec<InlineAnnotation>,
++
++    /// Hints that carry their own highlight, allowing a
++    /// different style (fg, bg, modifiers) per annotation. Each entry is
++    /// rendered as its own annotation layer so the segments of a single
++    /// hint can each have their own colors.
++    pub styled_inlay_hints: Vec<(InlineAnnotation, Option<syntax::Highlight>)>,
+ }
+ 
+ impl DocumentInlayHints {
+@@ -312,6 +318,7 @@ impl DocumentInlayHints {
+             other_inlay_hints: Vec::new(),
+             padding_before_inlay_hints: Vec::new(),
+             padding_after_inlay_hints: Vec::new(),
++            styled_inlay_hints: Vec::new(),
+         }
+     }
+ }
+@@ -1599,6 +1606,7 @@ impl Document {
+                 other_inlay_hints,
+                 padding_before_inlay_hints,
+                 padding_after_inlay_hints,
++                styled_inlay_hints,
+             } = text_annotation;
+ 
+             apply_inlay_hint_changes(padding_before_inlay_hints);
+@@ -1606,6 +1614,11 @@ impl Document {
+             apply_inlay_hint_changes(parameter_inlay_hints);
+             apply_inlay_hint_changes(other_inlay_hints);
+             apply_inlay_hint_changes(padding_after_inlay_hints);
++            changes.update_positions(
++                styled_inlay_hints
++                    .iter_mut()
++                    .map(|(annotation, _)| (&mut annotation.char_idx, Assoc::After)),
++            );
+         }
+ 
+         for highlights in self.document_highlights.values_mut() {
+diff --git a/helix-view/src/theme.rs b/helix-view/src/theme.rs
+index b564f5ec27ae..92a5cbe8af6d 100644
+--- a/helix-view/src/theme.rs
++++ b/helix-view/src/theme.rs
+@@ -429,10 +429,30 @@ impl Theme {
+         if let Some((red, green, blue)) = Self::decode_rgb_highlight(highlight) {
+             Style::new().fg(Color::Rgb(red, green, blue))
+         } else {
+-            self.highlights[highlight.idx()]
++            // runtime registered theme can outlive a theme switch,
++            // rendering them unstyled instead of giving panic
++            self.highlights
++                .get(highlight.idx())
++                .copied()
++                .unwrap_or_default()
+         }
+     }
+ 
++    /// Registers `style` under `scope` as a highlight so that runtime added
++    /// virtual text can carry arbitrary styles. Returns the already registered
++    /// `Highlight` when the scope is known.
++    pub fn ensure_highlight(&mut self, scope: &str, style: Style) -> Highlight {
++        if let Some(highlight) = self.scope_index.get(scope) {
++            return *highlight;
++        }
++        let highlight = Highlight::new(self.highlights.len() as u32);
++        self.styles.insert(scope.to_owned(), style);
++        self.scopes.push(scope.to_owned());
++        self.highlights.push(style);
++        self.scope_index.insert(scope.to_owned(), highlight);
++        highlight
++    }
++
+     #[inline]
+     pub fn scope(&self, highlight: Highlight) -> &str {
+         &self.scopes[highlight.idx()]
+diff --git a/helix-view/src/view.rs b/helix-view/src/view.rs
+index d211d8e6eb48..ea065af35fe2 100644
+--- a/helix-view/src/view.rs
++++ b/helix-view/src/view.rs
+@@ -474,6 +474,7 @@ impl View {
+             other_inlay_hints,
+             padding_before_inlay_hints,
+             padding_after_inlay_hints,
++            styled_inlay_hints,
+         }) = doc.inlay_hints.get(&self.id)
+         {
+             let type_style = theme.and_then(|t| t.find_highlight("ui.virtual.inlay-hint.type"));
+@@ -488,8 +489,13 @@ impl View {
+                 .add_inline_annotations(padding_before_inlay_hints, None)
+                 .add_inline_annotations(type_inlay_hints, type_style)
+                 .add_inline_annotations(parameter_inlay_hints, parameter_style)
+-                .add_inline_annotations(other_inlay_hints, other_style)
+-                .add_inline_annotations(padding_after_inlay_hints, None);
++                .add_inline_annotations(other_inlay_hints, other_style);
++            // styled hints carry their own highlight so each one is its own layer
++            for (annotation, highlight) in styled_inlay_hints {
++                text_annotations
++                    .add_inline_annotations(std::slice::from_ref(annotation), *highlight);
++            }
++            text_annotations.add_inline_annotations(padding_after_inlay_hints, None);
+         };
+         let config = doc.config.load();
+ 

@@ -1,0 +1,291 @@
+From: magos <local>
+Date: Sat, 28 Sep 2026 00:00:00 +0200
+Subject: [PATCH] Scale Steel plugin decorations linearly
+
+LOCAL PATCH - OURS, NOT FOR UPSTREAM. See README.md in this directory.
+
+The Steel decoration API added by 0001-0005 pushes one annotation layer per
+overlay (a `Layer` binds one highlight to the whole layer) and clones the
+document's entire inlay-hints snapshot on every add-overlay! /
+add-styled-inlay-hint / add-line-background! call. Both are quadratic in the
+number of plugin overlays: the plugin pass is O(N^2), and
+TextAnnotations::overlay_at looks every rendered grapheme up against all N
+layers.
+
+Fix: keep all plugin overlays in one document-owned, char-sorted layer that
+carries a per-entry highlight, and grow the snapshot in place through
+Document::inlay_hints_mut.
+
+Measured on ~/.claude/plans/auth-seam-implementation.md (91KB, 1502 lines, 58
+table rows => 28,587 plugin overlays per render pass), CPU consumed by one
+cursor move while vista renders (100 jiffies = 1s CPU):
+
+    without this patch   166 jiffies (1.66 s)
+    with this patch        4 jiffies (40 ms)
+    vista not rendering    1 jiffy   (unpatched-helix baseline)
+
+TextAnnotation build per rendered frame with this patch: 87 us median, 436 us
+max. Rendered output is byte-identical with and without this patch (captured
+terminal output of a table-heavy buffer), and buffer contents are unaffected:
+conceals stay display-only.
+--- a/helix-core/src/text_annotations.rs
++++ b/helix-core/src/text_annotations.rs
+@@ -279,6 +279,14 @@
+     inline_annotations: Vec<Layer<'a, InlineAnnotation, Option<Highlight>>>,
+     overlays: Vec<Layer<'a, Overlay, Option<Highlight>>>,
+     line_annotations: Vec<(Cell<usize>, RawBox<dyn LineAnnotation + 'a>)>,
++    /// Overlays that each carry their own highlight, borrowed from whoever owns
++    /// them. `add_overlay` binds one highlight to a whole layer, so per-overlay
++    /// styles would need one layer each and `overlay_at` is O(layers) per
++    /// grapheme. Keeping them in this single sorted layer makes a document with
++    /// thousands of plugin overlays cost the same per grapheme as one.
++    styled_overlays: Vec<&'a (Overlay, Option<Highlight>)>,
++    /// Index of the next entry in `styled_overlays`
++    next_styled_overlay: Cell<usize>,
+ }
+ 
+ impl Debug for TextAnnotations<'_> {
+@@ -286,6 +294,7 @@
+         f.debug_struct("TextAnnotations")
+             .field("inline_annotations", &self.inline_annotations)
+             .field("overlays", &self.overlays)
++            .field("styled_overlays", &self.styled_overlays)
+             .finish_non_exhaustive()
+     }
+ }
+@@ -295,6 +304,10 @@
+     pub fn reset_pos(&self, char_idx: usize) {
+         reset_pos(&self.inline_annotations, char_idx, |annot| annot.char_idx);
+         reset_pos(&self.overlays, char_idx, |annot| annot.char_idx);
++        self.next_styled_overlay.set(
++            self.styled_overlays
++                .partition_point(|entry| entry.0.char_idx < char_idx),
++        );
+         for (next_anchor, layer) in &self.line_annotations {
+             next_anchor.set(unsafe { layer.get().reset_pos(char_idx) });
+         }
+@@ -354,6 +367,20 @@
+         self
+     }
+ 
++    /// Add overlays that carry their own highlight, without adding a layer per
++    /// overlay. Entries are kept sorted by `char_idx`, so they can be added
++    /// unsorted. Earlier `add_overlay` layers win at the same `char_idx`.
++    pub fn add_styled_overlays(
++        &mut self,
++        overlays: impl IntoIterator<Item = &'a (Overlay, Option<Highlight>)>,
++    ) -> &mut Self {
++        self.styled_overlays.extend(overlays);
++        // stable, so overlays at the same char_idx keep their insertion order
++        self.styled_overlays
++            .sort_by(|a, b| a.0.char_idx.cmp(&b.0.char_idx));
++        self
++    }
++
+     /// Add new annotation lines.
+     ///
+     /// The line annotations **must be sorted** by their `char_idx`.
+@@ -391,6 +418,16 @@
+ 
+     pub(crate) fn overlay_at(&self, char_idx: usize) -> Option<(&Overlay, Option<Highlight>)> {
+         let mut overlay = None;
++        let mut next_styled_overlay = self.next_styled_overlay.get();
++        while let Some(&entry) = self.styled_overlays.get(next_styled_overlay) {
++            debug_assert!(entry.0.char_idx >= char_idx);
++            if entry.0.char_idx != char_idx {
++                break;
++            }
++            overlay = Some((&entry.0, entry.1));
++            next_styled_overlay += 1;
++        }
++        self.next_styled_overlay.set(next_styled_overlay);
+         for layer in &self.overlays {
+             while let Some(new_overlay) = layer.consume(char_idx, |annot| annot.char_idx) {
+                 overlay = Some((new_overlay, layer.metadata));
+--- a/helix-view/src/document.rs
++++ b/helix-view/src/document.rs
+@@ -2541,6 +2541,12 @@
+         self.inlay_hints.get(&view_id)
+     }
+ 
++    /// Mutable variant of [`Self::inlay_hints`], so a caller that adds a few
++    /// annotations at a time does not have to clone the whole snapshot first
++    pub fn inlay_hints_mut(&mut self, view_id: ViewId) -> Option<&mut DocumentInlayHints> {
++        self.inlay_hints.get_mut(&view_id)
++    }
++
+     /// Completely removes all the inlay hints saved for the document, dropping them to free memory
+     /// (since it often means inlay hints have been fully deactivated).
+     pub fn reset_all_inlay_hints(&mut self) {
+--- a/helix-view/src/view.rs
++++ b/helix-view/src/view.rs
+@@ -499,9 +499,11 @@
+                     .add_inline_annotations(std::slice::from_ref(annotation), *highlight);
+             }
+             text_annotations.add_inline_annotations(padding_after_inlay_hints, None);
+-            // overlays replace or restyle real graphemes, each carries its own style
+-            for (overlay, highlight) in styled_overlays {
+-                text_annotations.add_overlay(std::slice::from_ref(overlay), *highlight);
++            // overlays replace or restyle real graphemes, each carries its own
++            // style: one layer for all of them, or every grapheme of the
++            // document would be looked up against every overlay
++            if !styled_overlays.is_empty() {
++                text_annotations.add_styled_overlays(styled_overlays.iter());
+             }
+         };
+         let config = doc.config.load();
+--- a/helix-term/src/commands/engine/steel/mod.rs
++++ b/helix-term/src/commands/engine/steel/mod.rs
+@@ -5624,7 +5624,33 @@
+     })
+ }
+ 
+-// add overlays to the focused view, making a hints snapshot if there isn't one
++// make a hints snapshot for the view if it does not have one yet, so plugin
++// decorations have somewhere anchored to live
++fn ensure_styled_hints_snapshot(view: &helix_view::View, doc: &mut helix_view::document::Document) {
++    if doc.inlay_hints(view.id).is_some() {
++        return;
++    }
++    let doc_text = doc.text();
++    let len_lines = doc_text.len_lines();
++    let view_height = view.inner_height();
++    let first_visible_line =
++        doc_text.char_to_line(doc.view_offset(view.id).anchor.min(doc_text.len_chars()));
++    let first_line = first_visible_line.saturating_sub(view_height);
++    let last_line = first_visible_line
++        .saturating_add(view_height.saturating_mul(2))
++        .min(len_lines);
++    doc.set_inlay_hints(
++        view.id,
++        DocumentInlayHints::empty_with_id(DocumentInlayHintsId {
++            first_line,
++            last_line,
++        }),
++    );
++}
++
++// add overlays to the focused view. The snapshot is grown in place: cloning it
++// per overlay made a single add-overlay! cost O(all decorations), so decorating
++// a document was quadratic in its own size
+ fn push_styled_overlays(
+     cx: &mut Context,
+     overlays: Vec<(helix_core::text_annotations::Overlay, Option<helix_core::syntax::Highlight>)>,
+@@ -5636,24 +5662,10 @@
+     let view = cx.editor.tree.get(view_id);
+     let doc_id = view.doc;
+     let doc = cx.editor.documents.get_mut(&doc_id)?;
+-    let mut new_inlay_hints = doc.inlay_hints(view_id).cloned().unwrap_or_else(|| {
+-        let doc_text = doc.text();
+-        let len_lines = doc_text.len_lines();
+-        let view_height = view.inner_height();
+-        let first_visible_line =
+-            doc_text.char_to_line(doc.view_offset(view_id).anchor.min(doc_text.len_chars()));
+-        let first_line = first_visible_line.saturating_sub(view_height);
+-        let last_line = first_visible_line
+-            .saturating_add(view_height.saturating_mul(2))
+-            .min(len_lines);
+-        DocumentInlayHints::empty_with_id(DocumentInlayHintsId {
+-            first_line,
+-            last_line,
+-        })
+-    });
+-    new_inlay_hints.styled_overlays.extend(overlays);
+-    let id = new_inlay_hints.id;
+-    doc.set_inlay_hints(view_id, new_inlay_hints);
++    ensure_styled_hints_snapshot(view, doc);
++    let hints = doc.inlay_hints_mut(view_id)?;
++    hints.styled_overlays.extend(overlays);
++    let id = hints.id;
+     Some((id.first_line, id.last_line))
+ }
+ 
+@@ -5711,26 +5723,10 @@
+     let view = cx.editor.tree.get(view_id);
+     let doc_id = view.doc;
+     let doc = cx.editor.documents.get_mut(&doc_id)?;
+-    let mut new_inlay_hints = doc.inlay_hints(view_id).cloned().unwrap_or_else(|| {
+-        let doc_text = doc.text();
+-        let len_lines = doc_text.len_lines();
+-        let view_height = view.inner_height();
+-        let first_visible_line =
+-            doc_text.char_to_line(doc.view_offset(view_id).anchor.min(doc_text.len_chars()));
+-        let first_line = first_visible_line.saturating_sub(view_height);
+-        let last_line = first_visible_line
+-            .saturating_add(view_height.saturating_mul(2))
+-            .min(len_lines);
+-        DocumentInlayHints::empty_with_id(DocumentInlayHintsId {
+-            first_line,
+-            last_line,
+-        })
+-    });
+-    new_inlay_hints
+-        .line_backgrounds
+-        .push((char_index, highlight));
+-    let id = new_inlay_hints.id;
+-    doc.set_inlay_hints(view_id, new_inlay_hints);
++    ensure_styled_hints_snapshot(view, doc);
++    let hints = doc.inlay_hints_mut(view_id)?;
++    hints.line_backgrounds.push((char_index, highlight));
++    let id = hints.id;
+     Some((id.first_line, id.last_line))
+ }
+ 
+@@ -5741,13 +5737,15 @@
+         return;
+     }
+     let doc_id = cx.editor.tree.get(view_id).doc;
+-    if let Some(doc) = cx.editor.documents.get_mut(&doc_id) {
+-        if let Some(mut hints) = doc.inlay_hints(view_id).cloned() {
+-            hints.styled_inlay_hints.clear();
+-            hints.styled_overlays.clear();
+-            hints.line_backgrounds.clear();
+-            doc.set_inlay_hints(view_id, hints);
+-        }
++    if let Some(hints) = cx
++        .editor
++        .documents
++        .get_mut(&doc_id)
++        .and_then(|doc| doc.inlay_hints_mut(view_id))
++    {
++        hints.styled_inlay_hints.clear();
++        hints.styled_overlays.clear();
++        hints.line_backgrounds.clear();
+     }
+ }
+ 
+@@ -5781,30 +5779,11 @@
+     let view = cx.editor.tree.get(view_id);
+     let doc_id = view.doc;
+     let doc = cx.editor.documents.get_mut(&doc_id)?;
+-    let mut new_inlay_hints = doc.inlay_hints(view_id).cloned().unwrap_or_else(|| {
+-        let doc_text = doc.text();
+-        let len_lines = doc_text.len_lines();
+-
+-        let view_height = view.inner_height();
+-        let first_visible_line =
+-            doc_text.char_to_line(doc.view_offset(view_id).anchor.min(doc_text.len_chars()));
+-        let first_line = first_visible_line.saturating_sub(view_height);
+-        let last_line = first_visible_line
+-            .saturating_add(view_height.saturating_mul(2))
+-            .min(len_lines);
+-
+-        let new_doc_inlay_hints_id = DocumentInlayHintsId {
+-            first_line,
+-            last_line,
+-        };
+-
+-        DocumentInlayHints::empty_with_id(new_doc_inlay_hints_id)
+-    });
+-
+-    new_inlay_hints.styled_inlay_hints.extend(hints);
++    ensure_styled_hints_snapshot(view, doc);
++    let styled_hints = doc.inlay_hints_mut(view_id)?;
++    styled_hints.styled_inlay_hints.extend(hints);
+ 
+-    let id = new_inlay_hints.id;
+-    doc.set_inlay_hints(view_id, new_inlay_hints);
++    let id = styled_hints.id;
+ 
+     Some((id.first_line, id.last_line))
+ }

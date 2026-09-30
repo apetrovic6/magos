@@ -8,7 +8,7 @@
 
   editorSettings = import ./_config/editor.nix;
   languages = import ./_config/languages.nix;
-  makeKeybinds = pkgs: import ./_config/keybinds.nix {inherit pkgs;};
+  mkKeybinds = pkgs: import ./_config/keybinds.nix {inherit pkgs;};
 
   # Steel cogs to install. Dependencies are pulled in automatically, so listing
   # `oil` is enough to also get `notify`.
@@ -27,6 +27,16 @@
 
     p.scooter
     p.scopeline
+
+    # In-editor markdown rendering (render-markdown.nvim style): headings, list
+    # bullets, checkbox glyphs, quote bars and code-block backgrounds are drawn
+    # as decorations over the buffer; the line under the cursor stays raw.
+    # Needs the decoration APIs in _config/steel-inlay-hints, see below.
+    p.vista
+    # vista's own dependency (declared in its cog.scm, but helix-plugins-nix
+    # does not mirror that into pluginDependencies, so the closure walk above
+    # cannot pull it in -- it has to be listed explicitly).
+    p.glyph
   ];
 
   # Each plugin may declare `pluginDependencies`; walk the closure so a cog
@@ -59,6 +69,32 @@
 
     plugins = pluginClosure (selectPlugins pkgs.stdenv.hostPlatform.system hxPkgs.helixPlugins);
     nativePlugins = builtins.filter (drv: (drv.native or null) != null) plugins;
+
+    # The steel-event-system branch only exposes unstyled `add-inlay-hint`.
+    # vista draws styled text, backgrounds and concealing overlays, so the five
+    # commits behind `Ra77a3l3-jar/helix@steel-inlay-hints` are vendored in
+    # under _config/steel-inlay-hints and applied here rather than switching the
+    # `helix-w-plugins` input to that fork -- it is 14 commits behind this lock.
+    # A sixth patch (0006) is ours, not upstream: the API those five add makes a
+    # document with N plugin overlays cost O(N^2), which measured ~1.7s of CPU per
+    # keystroke on a table-heavy plan document (~28k overlays). Both are described
+    # in _config/steel-inlay-hints/README.md.
+    # Cargo.lock is untouched, so the cargo deps stay in the store and only the
+    # helix crates rebuild.
+    patchedHelix = hxPkgs.helix.overrideAttrs (prev: {
+      patches =
+        (prev.patches or [])
+        ++ [
+          ./_config/steel-inlay-hints/0001-add-styled-inlay-hint-storage-and-rendering.patch
+          ./_config/steel-inlay-hints/0002-add-steel-api-for-styled-inlay-hints.patch
+          ./_config/steel-inlay-hints/0003-add-cursor-before-inlay-hints-anchored-at-a-line-end.patch
+          ./_config/steel-inlay-hints/0004-add-line-placement-for-styled-inlay-hints.patch
+          ./_config/steel-inlay-hints/0005-add-steel-overlay-highlight-and-background-api.patch
+          # ours, not upstream: makes the decoration APIs above linear instead
+          # of quadratic, see _config/steel-inlay-hints/README.md
+          ./_config/steel-inlay-hints/0006-local-scale-plugin-decorations-linearly.patch
+        ];
+    });
 
     # steel resolves `(require "oil/oil.scm")` against $STEEL_HOME/cogs and
     # loads `#%require-dylib` libraries out of $STEEL_HOME/native.
@@ -154,7 +190,10 @@
     customQueries = pkgs.runCommand "helix-custom-queries" {} ''
       mkdir -p $out/queries/rust
       cp -r ${./_config/queries}/. $out/queries
-      cat ${hxPkgs.helix.HELIX_DEFAULT_RUNTIME}/queries/rust/injections.scm \
+      # patchedHelix, not hxPkgs.helix: same runtime at the same rev, but it
+      # keeps the *wrapped* helix as the only helix in the closure. Referring to
+      # the unpatched attr here builds a second, ~4 minute copy of the editor.
+      cat ${patchedHelix.HELIX_DEFAULT_RUNTIME}/queries/rust/injections.scm \
           ${./_config/rust-view-injection.scm} \
         > $out/queries/rust/injections.scm
     '';
@@ -187,11 +226,13 @@
   in
     inputs.wrapper-modules.wrappers.helix.wrap {
       pkgs = hxPkgs;
+      # defaults to hxPkgs.helix (the steel fork straight from the overlay)
+      package = patchedHelix;
       settings =
         editorSettings
         // {
           theme = theme;
-          keys = (makeKeybinds pkgs).keys;
+          keys = (mkKeybinds pkgs).keys;
         };
       inherit languages;
       # languages.language = language.language;
@@ -227,7 +268,7 @@
       # runtime dir in priority order, so we chain them with a join.
       env.HELIX_RUNTIME = "${pkgs.symlinkJoin {
         name = "helix-runtime-custom";
-        paths = [ httpRuntime rstmlRuntime customQueries ];
+        paths = [httpRuntime rstmlRuntime customQueries];
       }}";
       runShell = [". ${seedSteelHome}"];
     };
@@ -248,14 +289,6 @@ in {
       programs.helix = {
         enable = true;
         package = self.packages.${pkgs.stdenv.hostPlatform.system}.helix;
-        # settings =
-        #   editorSettings
-        #   // {
-        #     theme = config.magos.helix.theme;
-        #     keys = (makeKeybinds pkgs).keys;
-        #   };
-        # inherit languages;
-        # runtimePackages = with pkgs; [alejandra];
       };
     };
   };

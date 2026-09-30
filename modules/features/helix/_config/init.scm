@@ -38,6 +38,25 @@
 (require "scooter/scooter.scm")
 (require "scopeline/scopeline.scm")
 
+;; vista -- markdown rendered in the buffer itself (styled inlay hints +
+;; overlays), so headings, bullets, quote bars and code fences get drawn over
+;; the source instead of previewing elsewhere. On by default for .md buffers;
+;; `:vista-toggle` off/on, `:vista-render` after a theme change.
+;; It is only loadable because the helix build is patched with the styled
+;; inlay hint / overlay API -- see ../default.nix and
+;; ../steel-inlay-hints/README.md, and drop this require together with
+;; `p.vista` if the patch is ever dropped.
+(require "vista/vista.scm")
+
+;; Rendering is ON: vista re-walks the whole tree and re-issues every decoration
+;; on each cursor move and each edit, and it hides characters by adding one
+;; overlay per hidden character (~28k overlays for a 1500-line table-heavy plan
+;; document). That is only affordable because of the linear-scaling patch in
+;; ../steel-inlay-hints -- without it the same navigation costs ~1.7s of CPU per
+;; keystroke. `space m m` / `:vista-disable` if you want the raw source back
+;; while editing a big one; `(vista-configure! (hash 'enabled #f))` here would
+;; make that the default instead (it is global, not per buffer).
+
 ;; Only clip the top row when scopeline actually has a scope to show.
 ;;
 ;; always-reserved? defaults to #t, which calls set-editor-clip-top! with 1

@@ -12,6 +12,15 @@ in {
       c = ":buffer-close";
       C = ":buffer-close!";
     };
+    # vista (in-buffer markdown rendering; on by default, see init.scm).
+    # Bound here rather than from
+    # init.scm: same effect, and this file is where the rest of the keybinds
+    # live. The cost is that which-key shows "Undocumented command" for them
+    # instead of the plugin's own @doc text.
+    space.m = {
+      m = ":vista-toggle";
+      r = ":vista-render";
+    };
     C-o = [
       ":new"
       ":insert-output env XDG_CONFIG_HOME=$HOME/.config ${lib.getExe pkgs.lazygit}"

@@ -1,0 +1,368 @@
+From f25de1eac72cc203e7f1e27e3a2d0a6ac612daeb Mon Sep 17 00:00:00 2001
+From: Ra77a3l3-jar <raffaelemeo77@gmail.com>
+Date: Wed, 29 Jul 2026 21:02:56 +0200
+Subject: [PATCH] Add Steel overlay, highlight and background API
+
+---
+ helix-core/src/graphemes.rs                   |   4 +
+ helix-term/src/commands/engine/steel/misc.scm |  35 +++++
+ helix-term/src/commands/engine/steel/mod.rs   | 142 ++++++++++++++++++
+ helix-term/src/commands/lsp.rs                |   2 +
+ helix-term/src/ui/editor.rs                   |  29 ++++
+ helix-view/src/document.rs                    |  22 +++
+ helix-view/src/view.rs                        |   7 +
+ 7 files changed, 241 insertions(+)
+
+diff --git a/helix-core/src/graphemes.rs b/helix-core/src/graphemes.rs
+index 6ec9d9798e97..9c58339c1b83 100644
+--- a/helix-core/src/graphemes.rs
++++ b/helix-core/src/graphemes.rs
+@@ -95,6 +95,10 @@ impl Display for Grapheme<'_> {
+ 
+ #[must_use]
+ pub fn grapheme_width(g: &str) -> usize {
++    if g.is_empty() {
++        // an empty overlay is concealed so it takes no space
++        return 0;
++    }
+     if g.as_bytes()[0] <= 127 {
+         // Fast-path ascii.
+         // Point 1: theoretically, ascii control characters should have zero
+diff --git a/helix-term/src/commands/engine/steel/misc.scm b/helix-term/src/commands/engine/steel/misc.scm
+index b64f971bcb1f..52dec7daa234 100644
+--- a/helix-term/src/commands/engine/steel/misc.scm
++++ b/helix-term/src/commands/engine/steel/misc.scm
+@@ -324,6 +324,41 @@
+ ;;
+ (define add-styled-line-inlay-hint helix.add-styled-line-inlay-hint)
+ 
++(provide add-overlay!)
++;;@doc
++;; Swap the grapheme at char-index for `replacement`, drawn with `style` (or #f
++;; for the default). Pass "" to hide the character
++;;
++;;```scheme
++;;(add-overlay! char-index replacement style) -> (list int? int?)
++;;```
++(define add-overlay! helix.add-overlay!)
++
++(provide add-highlight!)
++;;@doc
++;; Recolor the real text in [start-char end-char) with `style`, the characters
++;; stay as they are
++;;
++;;```scheme
++;;(add-highlight! start-char end-char style) -> (list int? int?)
++;;```
++(define add-highlight! helix.add-highlight!)
++
++(provide add-line-background!)
++;;@doc
++;; Paint a full-width background behind the line that holds `char-index`, drawn
++;; with `style`
++;;
++;;```scheme
++;;(add-line-background! char-index style) -> (list int? int?)
++;;```
++(define add-line-background! helix.add-line-background!)
++
++(provide clear-decorations!)
++;;@doc
++;; Remove every overlay and styled hint in the focused view
++(define clear-decorations! helix.clear-decorations!)
++
+ (provide remove-inlay-hint)
+ ;;@doc
+ ;;
+diff --git a/helix-term/src/commands/engine/steel/mod.rs b/helix-term/src/commands/engine/steel/mod.rs
+index b0b531552671..ac8655d780f4 100644
+--- a/helix-term/src/commands/engine/steel/mod.rs
++++ b/helix-term/src/commands/engine/steel/mod.rs
+@@ -4019,6 +4019,10 @@ fn load_misc_api(engine: &mut Engine, generate_sources: bool) {
+         .register_fn_with_ctx(CTX, "add-inlay-hint", add_inlay_hint)
+         .register_fn_with_ctx(CTX, "add-styled-inlay-hint", add_styled_inlay_hint)
+         .register_fn_with_ctx(CTX, "add-styled-line-inlay-hint", add_styled_line_inlay_hint)
++        .register_fn_with_ctx(CTX, "add-overlay!", steel_add_overlay)
++        .register_fn_with_ctx(CTX, "add-highlight!", steel_add_highlight)
++        .register_fn_with_ctx(CTX, "add-line-background!", steel_add_line_background)
++        .register_fn_with_ctx(CTX, "clear-decorations!", steel_clear_decorations)
+         .register_fn_with_ctx(CTX, "remove-inlay-hint", remove_inlay_hint)
+         .register_fn_with_ctx(CTX, "remove-inlay-hint-by-id", remove_inlay_hint_by_id)
+         .register_fn("fuzzy-match", fuzzy_match);
+@@ -5556,6 +5560,144 @@ pub fn add_styled_line_inlay_hint(
+     Ok(add_styled_inlay_hint_impl(cx, char_index, segments))
+ }
+ 
++// make a theme highlight from a style, reusing one for identical styles
++fn ensure_style_highlight(
++    cx: &mut Context,
++    style: Option<helix_view::theme::Style>,
++) -> Option<helix_core::syntax::Highlight> {
++    style.map(|style| {
++        let scope = format!("steel.style.{:?}", style);
++        cx.editor.theme.ensure_highlight(&scope, style)
++    })
++}
++
++// add overlays to the focused view, making a hints snapshot if there isn't one
++fn push_styled_overlays(
++    cx: &mut Context,
++    overlays: Vec<(helix_core::text_annotations::Overlay, Option<helix_core::syntax::Highlight>)>,
++) -> Option<(usize, usize)> {
++    let view_id = cx.editor.tree.focus;
++    if !cx.editor.tree.contains(view_id) {
++        return None;
++    }
++    let view = cx.editor.tree.get(view_id);
++    let doc_id = view.doc;
++    let doc = cx.editor.documents.get_mut(&doc_id)?;
++    let mut new_inlay_hints = doc.inlay_hints(view_id).cloned().unwrap_or_else(|| {
++        let doc_text = doc.text();
++        let len_lines = doc_text.len_lines();
++        let view_height = view.inner_height();
++        let first_visible_line =
++            doc_text.char_to_line(doc.view_offset(view_id).anchor.min(doc_text.len_chars()));
++        let first_line = first_visible_line.saturating_sub(view_height);
++        let last_line = first_visible_line
++            .saturating_add(view_height.saturating_mul(2))
++            .min(len_lines);
++        DocumentInlayHints::empty_with_id(DocumentInlayHintsId {
++            first_line,
++            last_line,
++        })
++    });
++    new_inlay_hints.styled_overlays.extend(overlays);
++    let id = new_inlay_hints.id;
++    doc.set_inlay_hints(view_id, new_inlay_hints);
++    Some((id.first_line, id.last_line))
++}
++
++// add-overlay! swaps the grapheme at char_index for replacement, "" hides it
++pub fn steel_add_overlay(
++    cx: &mut Context,
++    char_index: usize,
++    replacement: SteelString,
++    style: Option<helix_view::theme::Style>,
++) -> Option<(usize, usize)> {
++    let highlight = ensure_style_highlight(cx, style);
++    let overlay = helix_core::text_annotations::Overlay::new(char_index, replacement.to_string());
++    push_styled_overlays(cx, vec![(overlay, highlight)])
++}
++
++// add-highlight! recolors the real text in [start_char, end_char), chars stay
++pub fn steel_add_highlight(
++    cx: &mut Context,
++    start_char: usize,
++    end_char: usize,
++    style: Option<helix_view::theme::Style>,
++) -> Option<(usize, usize)> {
++    let view_id = cx.editor.tree.focus;
++    if !cx.editor.tree.contains(view_id) {
++        return None;
++    }
++    let doc_id = cx.editor.tree.get(view_id).doc;
++    let graphemes: Vec<(usize, String)> = {
++        let doc = cx.editor.documents.get(&doc_id)?;
++        let text = doc.text().slice(..);
++        let len = text.len_chars();
++        (start_char.min(len)..end_char.min(len))
++            .map(|i| (i, text.char(i).to_string()))
++            .collect()
++    };
++    let highlight = ensure_style_highlight(cx, style);
++    let overlays = graphemes
++        .into_iter()
++        .map(|(i, g)| (helix_core::text_annotations::Overlay::new(i, g), highlight))
++        .collect();
++    push_styled_overlays(cx, overlays)
++}
++
++// add-line-background! paints a full-width background behind the line at char_index
++pub fn steel_add_line_background(
++    cx: &mut Context,
++    char_index: usize,
++    style: Option<helix_view::theme::Style>,
++) -> Option<(usize, usize)> {
++    let highlight = ensure_style_highlight(cx, style);
++    let view_id = cx.editor.tree.focus;
++    if !cx.editor.tree.contains(view_id) {
++        return None;
++    }
++    let view = cx.editor.tree.get(view_id);
++    let doc_id = view.doc;
++    let doc = cx.editor.documents.get_mut(&doc_id)?;
++    let mut new_inlay_hints = doc.inlay_hints(view_id).cloned().unwrap_or_else(|| {
++        let doc_text = doc.text();
++        let len_lines = doc_text.len_lines();
++        let view_height = view.inner_height();
++        let first_visible_line =
++            doc_text.char_to_line(doc.view_offset(view_id).anchor.min(doc_text.len_chars()));
++        let first_line = first_visible_line.saturating_sub(view_height);
++        let last_line = first_visible_line
++            .saturating_add(view_height.saturating_mul(2))
++            .min(len_lines);
++        DocumentInlayHints::empty_with_id(DocumentInlayHintsId {
++            first_line,
++            last_line,
++        })
++    });
++    new_inlay_hints
++        .line_backgrounds
++        .push((char_index, highlight));
++    let id = new_inlay_hints.id;
++    doc.set_inlay_hints(view_id, new_inlay_hints);
++    Some((id.first_line, id.last_line))
++}
++
++// clear-decorations! drops every overlay and styled hint in the focused view
++pub fn steel_clear_decorations(cx: &mut Context) {
++    let view_id = cx.editor.tree.focus;
++    if !cx.editor.tree.contains(view_id) {
++        return;
++    }
++    let doc_id = cx.editor.tree.get(view_id).doc;
++    if let Some(doc) = cx.editor.documents.get_mut(&doc_id) {
++        if let Some(mut hints) = doc.inlay_hints(view_id).cloned() {
++            hints.styled_inlay_hints.clear();
++            hints.styled_overlays.clear();
++            hints.line_backgrounds.clear();
++            doc.set_inlay_hints(view_id, hints);
++        }
++    }
++}
++
+ fn add_styled_inlay_hint_impl(
+     cx: &mut Context,
+     char_index: usize,
+diff --git a/helix-term/src/commands/lsp.rs b/helix-term/src/commands/lsp.rs
+index 1825bb25bbb8..e73b35debff7 100644
+--- a/helix-term/src/commands/lsp.rs
++++ b/helix-term/src/commands/lsp.rs
+@@ -1477,6 +1477,8 @@ fn compute_inlay_hints_for_view(
+                     padding_before_inlay_hints,
+                     padding_after_inlay_hints,
+                     styled_inlay_hints: Vec::new(),
++                    styled_overlays: Vec::new(),
++                    line_backgrounds: Vec::new(),
+                 },
+             );
+             doc.inlay_hints_oudated = false;
+diff --git a/helix-term/src/ui/editor.rs b/helix-term/src/ui/editor.rs
+index f2f8412342e6..7f0263b2311c 100644
+--- a/helix-term/src/ui/editor.rs
++++ b/helix-term/src/ui/editor.rs
+@@ -121,6 +121,35 @@ impl EditorView {
+                 decorations.add_decoration(line_decoration);
+             }
+ 
++            // full-width line backgrounds from Steel plugins
++            if let Some(hints) = doc.inlay_hints(view.id) {
++                if !hints.line_backgrounds.is_empty() {
++                    let text = doc.text();
++                    let len_chars = text.len_chars();
++                    let backgrounds: Vec<(usize, Style)> = hints
++                        .line_backgrounds
++                        .iter()
++                        .filter_map(|(char_idx, hl)| {
++                            let style = theme.highlight((*hl)?);
++                            Some((text.char_to_line((*char_idx).min(len_chars)), style))
++                        })
++                        .collect();
++                    if !backgrounds.is_empty() {
++                        let line_bg = move |renderer: &mut TextRenderer, pos: LinePos| {
++                            for (line, style) in &backgrounds {
++                                if pos.doc_line == *line {
++                                    renderer.set_style(
++                                        Rect::new(inner.x, pos.visual_line, inner.width, 1),
++                                        *style,
++                                    );
++                                }
++                            }
++                        };
++                        decorations.add_decoration(line_bg);
++                    }
++                }
++            }
++
+             let syntax_highlighter =
+                 Self::doc_syntax_highlighter(doc, view_offset.anchor, inner.height, &loader);
+             let mut overlays = Vec::new();
+diff --git a/helix-view/src/document.rs b/helix-view/src/document.rs
+index a3d3ba7946eb..35668383366d 100644
+--- a/helix-view/src/document.rs
++++ b/helix-view/src/document.rs
+@@ -306,6 +306,14 @@ pub struct DocumentInlayHints {
+     /// rendered as its own annotation layer so the segments of a single
+     /// hint can each have their own colors.
+     pub styled_inlay_hints: Vec<(InlineAnnotation, Option<syntax::Highlight>)>,
++
++    /// Overlays that replace or recolor real graphemes, used by Steel plugins
++    /// to hide syntax and restyle text. Each entry carries its own style
++    pub styled_overlays: Vec<(Overlay, Option<syntax::Highlight>)>,
++
++    /// Full-width line backgrounds keyed by any char on the target line, used
++    /// by Steel plugins to paint behind a whole line
++    pub line_backgrounds: Vec<(usize, Option<syntax::Highlight>)>,
+ }
+ 
+ impl DocumentInlayHints {
+@@ -319,6 +327,8 @@ impl DocumentInlayHints {
+             padding_before_inlay_hints: Vec::new(),
+             padding_after_inlay_hints: Vec::new(),
+             styled_inlay_hints: Vec::new(),
++            styled_overlays: Vec::new(),
++            line_backgrounds: Vec::new(),
+         }
+     }
+ }
+@@ -1607,6 +1617,8 @@ impl Document {
+                 padding_before_inlay_hints,
+                 padding_after_inlay_hints,
+                 styled_inlay_hints,
++                styled_overlays,
++                line_backgrounds,
+             } = text_annotation;
+ 
+             apply_inlay_hint_changes(padding_before_inlay_hints);
+@@ -1619,6 +1631,16 @@ impl Document {
+                     .iter_mut()
+                     .map(|(annotation, _)| (&mut annotation.char_idx, Assoc::After)),
+             );
++            changes.update_positions(
++                styled_overlays
++                    .iter_mut()
++                    .map(|(overlay, _)| (&mut overlay.char_idx, Assoc::After)),
++            );
++            changes.update_positions(
++                line_backgrounds
++                    .iter_mut()
++                    .map(|(char_idx, _)| (char_idx, Assoc::After)),
++            );
+         }
+ 
+         for highlights in self.document_highlights.values_mut() {
+diff --git a/helix-view/src/view.rs b/helix-view/src/view.rs
+index ea065af35fe2..ed357866a364 100644
+--- a/helix-view/src/view.rs
++++ b/helix-view/src/view.rs
+@@ -475,6 +475,9 @@ impl View {
+             padding_before_inlay_hints,
+             padding_after_inlay_hints,
+             styled_inlay_hints,
++            styled_overlays,
++            // painted as render decorations in editor.rs, not text annotations
++            line_backgrounds: _,
+         }) = doc.inlay_hints.get(&self.id)
+         {
+             let type_style = theme.and_then(|t| t.find_highlight("ui.virtual.inlay-hint.type"));
+@@ -496,6 +499,10 @@ impl View {
+                     .add_inline_annotations(std::slice::from_ref(annotation), *highlight);
+             }
+             text_annotations.add_inline_annotations(padding_after_inlay_hints, None);
++            // overlays replace or restyle real graphemes, each carries its own style
++            for (overlay, highlight) in styled_overlays {
++                text_annotations.add_overlay(std::slice::from_ref(overlay), *highlight);
++            }
+         };
+         let config = doc.config.load();
+ 
