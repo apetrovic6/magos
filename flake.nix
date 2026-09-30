@@ -63,6 +63,12 @@
 
     helix-plugins.url = "github:maxschipper/helix-plugins-nix";
 
+    # numtide/nix-ai-tools, renamed. The bare .../llm-agents (no .nix) 404s.
+    llm-agents = {
+      url = "github:numtide/llm-agents.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Developed out of tree at ~/clan/connect.hx. Published at
     # github:apetrovic6/connect.hx, but deliberately still a path: input so
     # local edits can be tested without pushing -- nix pins a path: input by
@@ -81,6 +87,13 @@
 
     tree-sitter-rstml = {
       url = "github:rayliwell/tree-sitter-rstml/v2.0.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Oh My Pi — enhanced fork of Pi with 31 built-in tools, LSP, subagents, etc.
+    # Used as a wrapper (not the home module) — see modules/features/omp/default.nix
+    oh-my-pi = {
+      url = "github:can1357/oh-my-pi";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
