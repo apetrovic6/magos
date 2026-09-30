@@ -83,6 +83,17 @@
       inputs.helix-plugins.follows = "helix-plugins";
     };
 
+    # Developed out of tree at ~/clan/inline-values.hx, same arrangement as
+    # connect-hx above: a path: input while it is young, pinned by narHash,
+    # so a local edit needs `nix flake update inline-values-hx` here before
+    # a rebuild picks it up. The follows keep its helixPlugins scope
+    # identical to the one above, so buildHelixPlugin is not built twice.
+    inline-values-hx = {
+      url = "path:/home/apetrovic/clan/inline-values.hx";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.helix-plugins.follows = "helix-plugins";
+    };
+
     treefmt-nix.url = "github:numtide/treefmt-nix";
 
     tree-sitter-rstml = {

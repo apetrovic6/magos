@@ -41,6 +41,14 @@ in {
     # ends the `%sh{` at its own `}` and silently truncates the command, which is
     # why neither script takes a path argument from here.
     space.G.d = ":debug-start \"binary (tty)\" %sh{${lib.getExe debug.resolveBinary} %{buffer_name}} %sh{${lib.getExe debug.ensureConsole}}";
+    # inline-values.hx: toggle debugger values drawn inline while stopped
+    # (fn add(x: f32 = 5, ...)). On by default; this is for getting the raw
+    # source back or re-enabling after :inline-values-disable. Uppercase V
+    # because the submenu's v is the built-in dap_variables picker, which
+    # stays useful exactly while this plugin renders. Bound in nix like the
+    # vista toggles, so which-key shows "Undocumented command" rather than
+    # the plugin's @doc.
+    space.G.V = ":inline-values-toggle";
     C-o = [
       ":new"
       ":insert-output env XDG_CONFIG_HOME=$HOME/.config ${lib.getExe pkgs.lazygit}"

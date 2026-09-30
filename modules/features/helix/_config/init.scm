@@ -26,6 +26,15 @@
 ;; is only :connect-doctor, which reports which executors are on PATH.
 (require "connect.hx/connect-client.scm")
 
+;; inline-values.hx -- debugger values drawn inline while stopped, developed
+;; out of tree at ~/clan/inline-values.hx. Same top-level require rationale
+;; as connect.hx: its provides (:inline-values-toggle and friends) land in
+;; the global env and helix turns them into typed commands. Needs the DAP
+;; Steel API from ../steel-inlay-hints patch 0007 (dap-current-frame and
+;; friends) -- requiring it against an unpatched helix fails with unbound
+;; identifiers, which silently drops every command this file defines.
+(require "inline-values.hx/inline-values.scm")
+
 
 ;; Bind connect.hx under `space H` (c exec, x clear), scoped to .connect and
 ;; .http files -- helix

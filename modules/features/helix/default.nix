@@ -18,6 +18,11 @@
     # helixPlugins set -- but it carries the same cogName/pluginDependencies
     # passthru, so pluginClosure walks it exactly like a packaged cog.
     inputs.connect-hx.packages.${system}.default
+    # Debugger values inline while stopped (fn add(x: f32 = 5, ...)). Also
+    # developed out of tree at ~/clan/inline-values.hx; needs the DAP Steel
+    # API from _config/steel-inlay-hints patch 0007, so drop it together
+    # with that patch if it is ever dropped.
+    inputs.inline-values-hx.packages.${system}.default
     # Packaged with meta.license = unfree, but upstream ships LICENSE-MIT and the
     # Cargo manifest agrees. Correcting it here keeps this one plugin from
     # forcing nixpkgs.config.allowUnfree across the whole configuration.
