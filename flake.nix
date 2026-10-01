@@ -68,7 +68,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    helix-plugins.url = "github:maxschipper/helix-plugins-nix";
+    helix-plugins = {
+      url = "github:maxschipper/helix-plugins-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     # numtide/nix-ai-tools, renamed. The bare .../llm-agents (no .nix) 404s.
     llm-agents = {
