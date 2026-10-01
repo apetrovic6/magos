@@ -91,6 +91,20 @@
     # Cargo.lock is untouched, so the cargo deps stay in the store and only the
     # helix crates rebuild.
     patchedHelix = hxPkgs.helix.overrideAttrs (prev: {
+      # `steel` is NOT a default feature of helix-term any more: upstream moved
+      # it out in df595c7 ("fix making steel default"), leaving
+      # `default = ["git"] # Add steel here for development`. The fork's
+      # derivation passes no features, so the default is what it gets, and
+      # without this line the whole plugin system silently disappears -- helix
+      # builds and runs, every cog and every API these patches add is simply
+      # absent, and the first sign is `no such command` at a keybinding.
+      #
+      # It has to be `cargoBuildFeatures`, not `buildFeatures`: buildRustPackage
+      # consumes `buildFeatures` as a function argument and turns it into this,
+      # so overrideAttrs setting the former lands an env var that cargo-build-hook
+      # never reads -- the build succeeds and steel is still missing.
+      cargoBuildFeatures = (prev.cargoBuildFeatures or []) ++ ["steel"];
+
       patches =
         (prev.patches or [])
         ++ [

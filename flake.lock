@@ -483,17 +483,17 @@
         "rust-overlay": "rust-overlay_2"
       },
       "locked": {
-        "lastModified": 1789655721,
-        "narHash": "sha256-jA7yECKwNvq2qgfrVwmXk00GtnF5SV8yRUNUCRyUZjA=",
+        "lastModified": 1790776887,
+        "narHash": "sha256-pPQFqMoUvDFsCDBjEWzrxb6x+5YXY/ELD5CTl/Tf5N8=",
         "owner": "mattwparas",
         "repo": "helix",
-        "rev": "09d67dfe7300ab18c267e6b0cbfbb493cce21d37",
+        "rev": "ee451df4ff6b0f6416a128f26affc2052b0669c6",
         "type": "github"
       },
       "original": {
         "owner": "mattwparas",
-        "ref": "steel-event-system",
         "repo": "helix",
+        "rev": "ee451df4ff6b0f6416a128f26affc2052b0669c6",
         "type": "github"
       }
     },
@@ -863,14 +863,17 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1790859447,
-        "narHash": "sha256-h1rMiuHK3tMxaZnogwRV2kct3+RVEZc/1FiiYRkQZ4Y=",
-        "path": "/home/apetrovic/clan/inline-values.hx",
-        "type": "path"
+        "lastModified": 1790859895,
+        "narHash": "sha256-X9ezsj6h11P3KvWJ3xHOIb4h9FzweEbAElqfGAVy5sQ=",
+        "owner": "apetrovic6",
+        "repo": "inline-values.hx",
+        "rev": "0c21a9ea1b6bdcb0bc4c40d8e4e776078057b605",
+        "type": "github"
       },
       "original": {
-        "path": "/home/apetrovic/clan/inline-values.hx",
-        "type": "path"
+        "owner": "apetrovic6",
+        "repo": "inline-values.hx",
+        "type": "github"
       }
     },
     "llm-agents": {

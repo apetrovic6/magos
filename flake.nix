@@ -56,8 +56,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Pinned to an exact rev, not the branch: the eight patches in
+    # modules/features/helix/_config/steel-inlay-hints are generated against it,
+    # and a bare `nix flake update` moving the branch head silently invalidates
+    # them. Bumping is deliberate work -- re-apply the stack against the new rev
+    # (`git am` the series onto a checkout), rebuild, and re-verify the DAP and
+    # decoration APIs the plugin depends on -- so it is done by editing this rev,
+    # never by letting the branch drift.
     helix-w-plugins = {
-      url = "github:mattwparas/helix/steel-event-system";
+      url = "github:mattwparas/helix/ee451df4ff6b0f6416a128f26affc2052b0669c6";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -89,7 +96,7 @@
     # a rebuild picks it up. The follows keep its helixPlugins scope
     # identical to the one above, so buildHelixPlugin is not built twice.
     inline-values-hx = {
-      url = "https://github.com/apetrovic6/inline-values.hx";
+      url = "github:apetrovic6/inline-values.hx";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.helix-plugins.follows = "helix-plugins";
     };
