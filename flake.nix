@@ -89,7 +89,7 @@
     # a rebuild picks it up. The follows keep its helixPlugins scope
     # identical to the one above, so buildHelixPlugin is not built twice.
     inline-values-hx = {
-      url = "path:/home/apetrovic/clan/inline-values.hx";
+      url = "https://github.com/apetrovic6/inline-values.hx";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.helix-plugins.follows = "helix-plugins";
     };
