@@ -125,6 +125,19 @@
               sourceLanguages = ["rust"];
               initCommands = [
                 ''script import os, sys, shutil, subprocess; _rc = shutil.which("rustc"); _sr = subprocess.run([_rc, "--print", "sysroot"], capture_output=True, text=True).stdout.strip() if _rc else ""; _etc = os.path.join(_sr, "lib/rustlib/etc") if _sr else ""; _lookup = os.path.join(_etc, "lldb_lookup.py") if _etc else ""; sys.path.insert(0, _etc) if _etc else None; lldb.debugger.HandleCommand("command script import " + _lookup) if _lookup and os.path.exists(_lookup) else None''
+                # The visualizer above CRASHES the adapter on a tokio Runtime:
+                # codelldb and the debuggee both die on any variables/evaluate
+                # that renders a frame holding one -- which, for an app that
+                # owns its runtime, is every stop. Bisected field by field on
+                # counter-tui: every other type in that struct renders fine,
+                # including deeply nested ones, so this is one bad type rather
+                # than "complex types".
+                #
+                # A later, more specific summary rule beats the visualizer's,
+                # so swapping just that type for a placeholder keeps pretty
+                # values everywhere else. Verified: `self` renders in full with
+                # runtime shown as <tokio runtime>, and nothing dies.
+                ''type summary add --summary-string "<tokio runtime>" -x "tokio::runtime::.*Runtime"''
               ];
               terminal = "console";
             };
@@ -159,6 +172,19 @@
               # Verified: without this s: String reads `{...}`, with it `"hello"`.
               initCommands = [
                 ''script import os, sys, shutil, subprocess; _rc = shutil.which("rustc"); _sr = subprocess.run([_rc, "--print", "sysroot"], capture_output=True, text=True).stdout.strip() if _rc else ""; _etc = os.path.join(_sr, "lib/rustlib/etc") if _sr else ""; _lookup = os.path.join(_etc, "lldb_lookup.py") if _etc else ""; sys.path.insert(0, _etc) if _etc else None; lldb.debugger.HandleCommand("command script import " + _lookup) if _lookup and os.path.exists(_lookup) else None''
+                # The visualizer above CRASHES the adapter on a tokio Runtime:
+                # codelldb and the debuggee both die on any variables/evaluate
+                # that renders a frame holding one -- which, for an app that
+                # owns its runtime, is every stop. Bisected field by field on
+                # counter-tui: every other type in that struct renders fine,
+                # including deeply nested ones, so this is one bad type rather
+                # than "complex types".
+                #
+                # A later, more specific summary rule beats the visualizer's,
+                # so swapping just that type for a placeholder keeps pretty
+                # values everywhere else. Verified: `self` renders in full with
+                # runtime shown as <tokio runtime>, and nothing dies.
+                ''type summary add --summary-string "<tokio runtime>" -x "tokio::runtime::.*Runtime"''
               ];
               # Mandatory; see the comment above `templates`. Note what console
               # mode does NOT do here: it does not capture the debuggee's output.
