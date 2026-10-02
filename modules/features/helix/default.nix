@@ -74,6 +74,37 @@
       # its NixOS/home-manager modules default to pkgs.steelix, which would
       # pull in a second helix build instead of the one above.
       inputs.helix-plugins.overlays.default
+      # tree-sitter-perl's src/tsp_unicode.h does `#include "bsearch.c"`, and
+      # that file defines its own `void *bsearch(...)`. glibc 2.42+ makes
+      # `bsearch` a type-generic `_Generic` macro under C23, and gcc 16 defaults
+      # to -std=gnu23, so the macro rewrites the definition's own declarator and
+      # the grammar dies with "expected identifier or '(' before '_Generic'".
+      # helix's grammars.nix passes no -std at all, so pinning this one grammar
+      # back to gnu17 is the whole fix -- no other grammar redefines a libc
+      # symbol.
+      #
+      # grammarOverlays is grammars.nix's own extension point (it `extend`s a
+      # makeExtensible of name -> derivation), so this needs no fork of the
+      # helix-w-plugins input. It has to be `.override`, not `.overrideAttrs`:
+      # the grammars are a separate derivation that default.nix pulls in via
+      # callPackage, so grammarOverlays is a function argument, not an attr on
+      # helix itself.
+      #
+      # This sits in the overlay rather than on `patchedHelix` so that every
+      # helix in the closure picks it up. The wrapper and the plugin flakes each
+      # reach for `pkgs.helix` on their own, and fixing only the patched attr
+      # left those other instances still building the broken grammar.
+      (_final: prev: {
+        helix = prev.helix.override {
+          grammarOverlays = [
+            (_gFinal: gPrev: {
+              perl = gPrev.perl.overrideAttrs (o: {
+                FLAGS = o.FLAGS ++ ["-std=gnu17"];
+              });
+            })
+          ];
+        };
+      })
     ];
 
     plugins = pluginClosure (selectPlugins pkgs.stdenv.hostPlatform.system hxPkgs.helixPlugins);
