@@ -117,6 +117,71 @@
       url = "github:can1357/oh-my-pi";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # ── Omarchy desktop (modules/features/omarchy.nix) ──────────────────
+    #
+    # nixarchy is consumed for its PACKAGE only -- 1924 lines of
+    # de-Arch-ification over 444 upstream Omarchy scripts -- and none of its
+    # modules are imported. See the header of modules/features/omarchy.nix.
+    #
+    # No sops-nix `follows` here, and that is deliberate rather than an
+    # oversight. nixarchy's modules/nixos.nix imports its OWN sops-nix
+    # unconditionally and declares every `sops.*` option, so a consumer that
+    # already has one (clan-core's, say) would get each option declared twice
+    # by two different store paths and the machine would stop evaluating --
+    # with an error naming store paths rather than inputs. That bites a wrapper
+    # which imports nixarchy's modules; this module imports NONE of them, so
+    # nixarchy's sops-nix only ever sits in the lock graph and is never
+    # evaluated, built, or able to collide.
+    nixarchy = {
+      url = "github:olafkfreund/nixarchy/v4.0.4-1";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Omarchy shell plugins. `flake = false` because the module consumes each
+    # source tree directly -- a manifest.json plus QML, per Omarchy's plugin
+    # contract -- and wants nothing from these repos' own flakes.
+    nixarchy-herdr = {
+      url = "github:olafkfreund/nixarchy-herdr";
+      flake = false;
+    };
+
+    nixarchy-podman = {
+      url = "github:olafkfreund/nixarchy-podman";
+      flake = false;
+    };
+
+    nixarchy-winvm = {
+      url = "github:olafkfreund/nixarchy-winvm";
+      flake = false;
+    };
+
+    nixarchy-microvm = {
+      url = "github:olafkfreund/nixarchy-microvm";
+      flake = false;
+    };
+
+    nixarchy-lofi-focus = {
+      url = "github:olafkfreund/nixarchy-lofi-focus";
+      flake = false;
+    };
+
+    nixarchy-plugin-browser = {
+      url = "github:olafkfreund/nixarchy-plugin-browser";
+      flake = false;
+    };
+
+    # Omarchroma, packaged for NixOS: a runtime theme engine that retints GTK,
+    # Qt, terminals, shells and electron apps the moment a theme is switched.
+    # It COMPLEMENTS omarchy-theme-set rather than replacing it, through hooks
+    # in ~/.config/omarchy/hooks/theme-set.d/. A real flake, and its
+    # nixosModules.default is standalone -- it declares
+    # programs.nixarchyThemeEngine and never touches programs.nixarchy.
+    nixarchy-omatheme = {
+      url = "github:olafkfreund/nixarchy-omatheme";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
   };
 
   outputs = inputs @ {

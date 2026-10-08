@@ -248,8 +248,8 @@ in {
     # Built-in providers are added only when their apiKey path is set, so an
     # unconfigured provider never triggers a "No models match" warning.
     enabledModels =
-      if cfg.enabledModels != null then
-        cfg.enabledModels
+      if cfg.enabledModels != null
+      then cfg.enabledModels
       else
         ["llama-swap/*"]
         ++ builtins.concatMap (name: providers.${name}.patterns) (builtins.attrNames enabledKeys);
@@ -279,8 +279,8 @@ in {
 
     # Config symlink setup — only when the base package exposes its files.
     configSetupSnippet =
-      if configFiles == null then
-        ""
+      if configFiles == null
+      then ""
       else ''
         d="''${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}"
         mkdir -p "$d"
@@ -390,23 +390,26 @@ in {
         '';
       };
 
-      apiKeys = lib.mapAttrs (name: providerDef:
-        lib.mkOption {
-          type = lib.types.nullOr (lib.types.either lib.types.path lib.types.str);
-          default = null;
-          example = "/run/secrets/pi-api-keys/qwen-api-key";
-          description = ''
-            Path to a file containing the ${name} API key. Read at runtime
-            and exported as `$${providerDef.envVar}`, which pi (and omp)
-            pick up from the environment. For built-in providers, pi already
-            knows the base URL, API type, and model catalog — only the key
-            is needed.
+      apiKeys =
+        lib.mapAttrs (
+          name: providerDef:
+            lib.mkOption {
+              type = lib.types.nullOr (lib.types.either lib.types.path lib.types.str);
+              default = null;
+              example = "/run/secrets/pi-api-keys/qwen-api-key";
+              description = ''
+                Path to a file containing the ${name} API key. Read at runtime
+                and exported as `$${providerDef.envVar}`, which pi (and omp)
+                pick up from the environment. For built-in providers, pi already
+                knows the base URL, API type, and model catalog — only the key
+                is needed.
 
-            Typically pointed at a sops-nix secret path from
-            `clan.core.vars.generators`, but any readable file works.
-          '';
-        }
-      ) providers;
+                Typically pointed at a sops-nix secret path from
+                `clan.core.vars.generators`, but any readable file works.
+              '';
+            }
+        )
+        providers;
     };
 
     config = lib.mkIf cfg.enable {
@@ -428,6 +431,44 @@ in {
     # with each model's ctxSize in machines/phalanx/llama-swap.nix
     # (omnissiah) -- pi has no metadata for a custom endpoint either.
     #
+    # maxTokens is the per-response OUTPUT cap, sent as max_tokens. llama-swap
+    # passes no -n, so this value alone decides when llama.cpp stops; hitting it
+    # returns finish_reason "length" and pi ends the run with "Response was
+    # truncated before completion." It only compacts and retries when a response
+    # is cut BELOW the limit (its context-overflow signal), so an exact hit is
+    # terminal. 8192 was too small for the reasoning entries -- a single
+    # planning turn spends that in one thinking block (measured 2026-10-07: four
+    # turns at exactly 8192 output, context only 60-68k of 131072).
+    #
+    # maxTokens does NOT move the compaction threshold. That is
+    # compaction.reserveTokens in `settings` below, a separate budget -- see the
+    # comment there for the interaction between the two.
+    #
+    # coder-30b keeps 8192: it does not think, and its window is only 32768.
+    # The largest non-truncated reply measured in a real session was 4977.
+    llamaSwapModels = [
+      {
+        id = "qwen36-35b-q4";
+        name = "Qwen3.6-35B-A3B IQ4_XS (local)";
+        contextWindow = 131072;
+        maxTokens = 32768;
+        reasoning = true;
+      }
+      {
+        id = "coder-30b";
+        name = "Qwen3-Coder-30B-A3B (local)";
+        contextWindow = 32768;
+        maxTokens = 8192;
+      }
+      {
+        id = "qwen38-flash-q3";
+        name = "Qwen3.8-Flash-Next IQ3_XXS (local, RAM-offloaded)";
+        contextWindow = 131072;
+        maxTokens = 32768;
+        reasoning = true;
+      }
+    ];
+
     # Only CUSTOM (non-built-in) providers belong here. Built-in providers
     # (qwen, anthropic, openai, etc.) already ship in pi's catalog — adding
     # them here would shadow it and force us to repeat baseUrl/api/models.
@@ -440,28 +481,7 @@ in {
             # llama-swap ignores the value, but pi hides models from /model until
             # it can resolve *some* credential for the provider.
             apiKey = "local";
-            models = [
-              {
-                id = "qwen36-35b-q4";
-                name = "Qwen3.6-35B-A3B IQ4_XS (local)";
-                contextWindow = 131072;
-                maxTokens = 8192;
-                reasoning = true;
-              }
-              {
-                id = "coder-30b";
-                name = "Qwen3-Coder-30B-A3B (local)";
-                contextWindow = 32768;
-                maxTokens = 8192;
-              }
-              {
-                id = "qwen38-flash-q3";
-                name = "Qwen3.8-Flash-Next IQ3_XXS (local, RAM-offloaded)";
-                contextWindow = 131072;
-                maxTokens = 8192;
-                reasoning = true;
-              }
-            ];
+            models = llamaSwapModels;
           };
         }
         //
@@ -536,6 +556,43 @@ in {
       ];
       quietStartup = true;
       enableInstallTelemetry = false;
+
+      # Auto-compaction fires when contextTokens > contextWindow -
+      # reserveTokens, independent of maxTokens (which only caps one reply).
+      # pi's default reserve is 16384, so a 131072-token model compacts at
+      # 114688.
+      #
+      # reserveTokens is TWO budgets behind one number: the trigger above, and
+      # the summarization call's own output limit (capped in turn by the model's
+      # maxTokens). So pushing the trigger later starves the summarizer, and
+      # when the summary runs out of room the run dies with
+      # "Auto-compaction failed: Summarization failed: generation hit the token
+      # cap and the summary is incomplete" -- strictly worse than compacting
+      # early, because a failed summary cannot be retried into existence.
+      #
+      # That is why this is 16384 and not lower. Measured 2026-10-07 on a
+      # 131072 window: summaries ran 17534 then 24025 characters, roughly 5-7k
+      # tokens and GROWING (each one re-summarizes its predecessor). At a
+      # reserve of 8192 the third one hit the cap. 16384 leaves ~2.5x the
+      # largest observed summary.
+      #
+      # keepRecentTokens (pi default 20000) is the knob that has no downside
+      # here: it is how much recent context survives verbatim, so raising it
+      # both keeps more real context AND shrinks the span handed to the
+      # summarizer, which is what actually protects the cap as a session grows.
+      #
+      # Only the 131072 models are overridden. coder-30b stays on pi's defaults
+      # -- keepRecentTokens 40000 exceeds its entire 32768 window, so a cut
+      # point would never be found.
+      compaction.modelOverrides = lib.listToAttrs (
+        map (m:
+          lib.nameValuePair "llama-swap/${m.id}" {
+            reserveTokens = 16384;
+            keepRecentTokens = 40000;
+          })
+        (lib.filter (m: m.contextWindow >= 131072) llamaSwapModels)
+      );
+
       # enabledModels is NOT set here — it's injected at runtime by the
       # base wrapper when PI_ENABLED_MODELS is set by the module wrapper.
     };

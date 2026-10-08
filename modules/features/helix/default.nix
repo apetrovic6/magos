@@ -12,37 +12,38 @@
 
   # Steel cogs to install. Dependencies are pulled in automatically, so listing
   # `oil` is enough to also get `notify`.
-  selectPlugins = system: p: [
-    p.oil
-    # Developed out of tree, so it comes from a flake input rather than the
-    # helixPlugins set -- but it carries the same cogName/pluginDependencies
-    # passthru, so pluginClosure walks it exactly like a packaged cog.
-    inputs.connect-hx.packages.${system}.default
-    # Debugger values inline while stopped (fn add(x: f32 = 5, ...)). Also
-    # developed out of tree at ~/clan/inline-values.hx; needs the DAP Steel
-    # API from _config/steel-inlay-hints patch 0007, so drop it together
-    # with that patch if it is ever dropped.
-    inputs.inline-values-hx.packages.${system}.default
-    # Packaged with meta.license = unfree, but upstream ships LICENSE-MIT and the
-    # Cargo manifest agrees. Correcting it here keeps this one plugin from
-    # forcing nixpkgs.config.allowUnfree across the whole configuration.
-    (p.helix-file-watcher.overrideAttrs (old: {
-      meta = old.meta // {license = lib.licenses.mit;};
-    }))
+  selectPlugins = system: p:
+    with p; [
+      oil-hx
+      # Developed out of tree, so it comes from a flake input rather than the
+      # helixPlugins set -- but it carries the same cogName/pluginDependencies
+      # passthru, so pluginClosure walks it exactly like a packaged cog.
+      inputs.connect-hx.packages.${system}.default
+      # Debugger values inline while stopped (fn add(x: f32 = 5, ...)). Also
+      # developed out of tree at ~/clan/inline-values.hx; needs the DAP Steel
+      # API from _config/steel-inlay-hints patch 0007, so drop it together
+      # with that patch if it is ever dropped.
+      inputs.inline-values-hx.packages.${system}.default
+      # Packaged with meta.license = unfree, but upstream ships LICENSE-MIT and the
+      # Cargo manifest agrees. Correcting it here keeps this one plugin from
+      # forcing nixpkgs.config.allowUnfree across the whole configuration.
+      (p.helix-file-watcher.overrideAttrs (old: {
+        meta = old.meta // {license = lib.licenses.mit;};
+      }))
 
-    p.scooter
-    p.scopeline
+      scooter-hx
+      scopeline-hx
 
-    # In-editor markdown rendering (render-markdown.nvim style): headings, list
-    # bullets, checkbox glyphs, quote bars and code-block backgrounds are drawn
-    # as decorations over the buffer; the line under the cursor stays raw.
-    # Needs the decoration APIs in _config/steel-inlay-hints, see below.
-    p.vista
-    # vista's own dependency (declared in its cog.scm, but helix-plugins-nix
-    # does not mirror that into pluginDependencies, so the closure walk above
-    # cannot pull it in -- it has to be listed explicitly).
-    p.glyph
-  ];
+      # In-editor markdown rendering (render-markdown.nvim style): headings, list
+      # bullets, checkbox glyphs, quote bars and code-block backgrounds are drawn
+      # as decorations over the buffer; the line under the cursor stays raw.
+      # Needs the decoration APIs in _config/steel-inlay-hints, see below.
+      p.vista-hx
+      # vista's own dependency (declared in its cog.scm, but helix-plugins-nix
+      # does not mirror that into pluginDependencies, so the closure walk above
+      # cannot pull it in -- it has to be listed explicitly).
+      glyph-hx
+    ];
 
   # Each plugin may declare `pluginDependencies`; walk the closure so a cog
   # never ends up in STEEL_HOME without the cogs it requires.
