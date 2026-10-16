@@ -134,7 +134,7 @@
     # nixarchy's sops-nix only ever sits in the lock graph and is never
     # evaluated, built, or able to collide.
     nixarchy = {
-      url = "github:olafkfreund/nixarchy/v4.0.4-1";
+      url = "github:olafkfreund/nixarchy/v4.0.4-4";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
