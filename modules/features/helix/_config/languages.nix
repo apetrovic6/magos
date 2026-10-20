@@ -29,8 +29,8 @@
       # `-q` silences the informational chatter (it goes to stderr, so stdout is
       # clean either way, but alejandra itself suggests it).
       formatter = {
-        command = "alejandra";
-        args = ["-q" "-"];
+        command = "nixfmt";
+        # args = ["-q" "-"];
       };
       auto-format = true;
     }
