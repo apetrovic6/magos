@@ -79,6 +79,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Nautili (DevZero's opencode fork), packaged from its prebuilt npm binary.
+    nautili = {
+      url = "github:devzero-inc/nautili-harness-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Developed out of tree at ~/clan/connect.hx. Published at
     # github:apetrovic6/connect.hx, but deliberately still a path: input so
     # local edits can be tested without pushing -- nix pins a path: input by
@@ -134,7 +140,7 @@
     # nixarchy's sops-nix only ever sits in the lock graph and is never
     # evaluated, built, or able to collide.
     nixarchy = {
-      url = "github:olafkfreund/nixarchy/v4.0.4-4";
+      url = "github:olafkfreund/nixarchy/v4.0.5-1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -221,7 +227,7 @@
       }: {
         treefmt = {
           projectRootFile = "flake.nix";
-          programs.alejandra.enable = true; # Nix formatter
+          programs.nixfmt.enable = true; # Nix formatter
           # add more: programs.prettier.enable = true; etc.
         };
 

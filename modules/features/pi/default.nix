@@ -244,14 +244,14 @@ in {
     # cycling. Derived from which apiKeys.* are configured; override the
     # option to customise.
     #
-    # llama-swap always qualifies (dummy "local" key baked into models.json).
+    # Strata always qualifies (dummy "local" key baked into models.json).
     # Built-in providers are added only when their apiKey path is set, so an
     # unconfigured provider never triggers a "No models match" warning.
     enabledModels =
       if cfg.enabledModels != null
       then cfg.enabledModels
       else
-        ["llama-swap/*"]
+        ["strata/*"]
         ++ builtins.concatMap (name: providers.${name}.patterns) (builtins.attrNames enabledKeys);
 
     enabledModelsJson = builtins.toJSON enabledModels;
@@ -354,11 +354,11 @@ in {
       enabledModels = lib.mkOption {
         type = lib.types.nullOr (lib.types.listOf lib.types.str);
         default = null;
-        example = ["llama-swap/*" "qwen-token-plan/*"];
+        example = ["strata/*" "qwen-token-plan/*"];
         description = ''
           Whitelist of model patterns shown in `/model` and used for Ctrl+P
           cycling. When `null` (the default) it is derived automatically:
-          `llama-swap/*` plus the real pi provider IDs of every configured
+          `strata/*` plus the real pi provider IDs of every configured
           `apiKeys.*` entry.
 
           Set this to override the derived list. Patterns use pi's `--models`
@@ -426,43 +426,32 @@ in {
   }: let
     piPkg = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.pi;
 
-    # Same llama-swap endpoint opencode.nix talks to. IDs must match
-    # llama-swap's model names exactly, and contextWindow must stay in sync
-    # with each model's ctxSize in machines/phalanx/llama-swap.nix
-    # (omnissiah) -- pi has no metadata for a custom endpoint either.
+    # The Strata endpoint. IDs must match the `model_name` in Strata's engine
+    # config (machines/phalanx/strata.nix -> strata-iq3_xxs.json) exactly, and
+    # contextWindow must stay in sync with its --max-context -- pi has no
+    # metadata for a custom endpoint.
     #
-    # maxTokens is the per-response OUTPUT cap, sent as max_tokens. llama-swap
-    # passes no -n, so this value alone decides when llama.cpp stops; hitting it
-    # returns finish_reason "length" and pi ends the run with "Response was
-    # truncated before completion." It only compacts and retries when a response
-    # is cut BELOW the limit (its context-overflow signal), so an exact hit is
-    # terminal. 8192 was too small for the reasoning entries -- a single
-    # planning turn spends that in one thinking block (measured 2026-10-07: four
-    # turns at exactly 8192 output, context only 60-68k of 131072).
+    # Strata's server actually accepts any model name on /v1/chat/completions
+    # (it serves exactly one model), but the real id is used here so /model and
+    # the logs name what is really running.
+    #
+    # maxTokens is the per-response OUTPUT cap, sent as max_tokens. Nothing
+    # downstream sets a limit of its own, so this value alone decides when
+    # generation stops; hitting it returns finish_reason "length" and pi ends
+    # the run with "Response was truncated before completion." It only compacts
+    # and retries when a response is cut BELOW the limit (its context-overflow
+    # signal), so an exact hit is terminal. 8192 was too small for a reasoning
+    # model -- a single planning turn spends that in one thinking block
+    # (measured 2026-10-07: four turns at exactly 8192 output, context only
+    # 60-68k of 131072).
     #
     # maxTokens does NOT move the compaction threshold. That is
     # compaction.reserveTokens in `settings` below, a separate budget -- see the
     # comment there for the interaction between the two.
-    #
-    # coder-30b keeps 8192: it does not think, and its window is only 32768.
-    # The largest non-truncated reply measured in a real session was 4977.
-    llamaSwapModels = [
+    strataModels = [
       {
-        id = "qwen36-35b-q4";
-        name = "Qwen3.6-35B-A3B IQ4_XS (local)";
-        contextWindow = 131072;
-        maxTokens = 32768;
-        reasoning = true;
-      }
-      {
-        id = "coder-30b";
-        name = "Qwen3-Coder-30B-A3B (local)";
-        contextWindow = 32768;
-        maxTokens = 8192;
-      }
-      {
-        id = "qwen38-flash-q3";
-        name = "Qwen3.8-Flash-Next IQ3_XXS (local, RAM-offloaded)";
+        id = "qwen3.8-flash-next-iq3_xxs";
+        name = "Qwen3.8-Flash-Next IQ3_XXS (local, Strata)";
         contextWindow = 131072;
         maxTokens = 32768;
         reasoning = true;
@@ -475,13 +464,13 @@ in {
     models = {
       providers =
         {
-          llama-swap = {
+          strata = {
             baseUrl = "http://127.0.0.1:8000/v1";
             api = "openai-completions";
-            # llama-swap ignores the value, but pi hides models from /model until
+            # Strata ignores the value, but pi hides models from /model until
             # it can resolve *some* credential for the provider.
             apiKey = "local";
-            models = llamaSwapModels;
+            models = strataModels;
           };
         }
         //
@@ -543,8 +532,8 @@ in {
     };
 
     settings = {
-      defaultProvider = "llama-swap";
-      defaultModel = "qwen38-flash-q3";
+      defaultProvider = "strata";
+      defaultModel = "qwen3.8-flash-next-iq3_xxs";
       theme = "everforest";
       # Resource paths may be absolute, so the theme dir needs no symlink.
       themes = ["${themesDir}"];
@@ -581,16 +570,17 @@ in {
       # both keeps more real context AND shrinks the span handed to the
       # summarizer, which is what actually protects the cap as a session grows.
       #
-      # Only the 131072 models are overridden. coder-30b stays on pi's defaults
-      # -- keepRecentTokens 40000 exceeds its entire 32768 window, so a cut
-      # point would never be found.
+      # The >= 131072 filter is kept even though only one model is listed now:
+      # keepRecentTokens 40000 would exceed a smaller window entirely and no cut
+      # point would ever be found, so a future short-context entry must not pick
+      # these overrides up by accident.
       compaction.modelOverrides = lib.listToAttrs (
         map (m:
-          lib.nameValuePair "llama-swap/${m.id}" {
+          lib.nameValuePair "strata/${m.id}" {
             reserveTokens = 16384;
             keepRecentTokens = 40000;
           })
-        (lib.filter (m: m.contextWindow >= 131072) llamaSwapModels)
+        (lib.filter (m: m.contextWindow >= 131072) strataModels)
       );
 
       # enabledModels is NOT set here — it's injected at runtime by the
