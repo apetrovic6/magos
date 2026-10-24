@@ -12,6 +12,11 @@
   baseSettings = {
     keys = import ./_config/keys.nix;
 
+    # The first-run notification setup saves its answer by writing this key
+    # back into config.toml, which is a read-only store path here, so it
+    # fails ("read-only file system") and re-runs on every start.
+    onboarding = false;
+
     ui.agent_panel_sort = "priority";
 
     theme = {
