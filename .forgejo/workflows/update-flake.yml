@@ -1,0 +1,41 @@
+name: update-flake
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+jobs:
+  update:
+    # cerberus host runner: uses the host's nix and store.
+    runs-on: nix
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Update flake inputs
+        env:
+          # Optional: avoids GitHub API rate limits and allows private inputs.
+          GH_TOKEN: ${{ secrets.GH_FLAKE_TOKEN }}
+        run: |
+          opts=(--extra-experimental-features "nix-command flakes")
+          if [ -n "$GH_TOKEN" ]; then
+            opts+=(--option access-tokens "github.com=$GH_TOKEN")
+          fi
+          nix "${opts[@]}" flake update
+
+      - name: Commit and push flake.lock
+        run: |
+          if git diff --quiet -- flake.lock; then
+            echo "flake.lock unchanged"
+            exit 0
+          fi
+          git config user.name "forgejo-actions"
+          git config user.email "forgejo-actions@noreply.forge.ugalabugala.org"
+          git add flake.lock
+          git commit -m "chore(flake): update"
+          git push origin HEAD:${{ github.ref_name }}
