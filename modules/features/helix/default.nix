@@ -95,8 +95,17 @@
       # helix in the closure picks it up. The wrapper and the plugin flakes each
       # reach for `pkgs.helix` on their own, and fixing only the patched attr
       # left those other instances still building the broken grammar.
+      #
+      # cylc is dropped outright: github:elliotfontaine/tree-sitter-cylc was
+      # deleted (404 on the pinned rev), and grammars.nix fetches every grammar
+      # with builtins.fetchTree at EVAL time, so any machine without a cached
+      # copy fails to evaluate at all. includeGrammarIf filters before the
+      # fetch; a grammarOverlays entry would not, it runs after. Only Cylc
+      # workflow files lose highlighting. Drop this once the fork's
+      # languages.toml points somewhere that exists.
       (_final: prev: {
         helix = prev.helix.override {
+          includeGrammarIf = g: g.name != "cylc";
           grammarOverlays = [
             (_gFinal: gPrev: {
               perl = gPrev.perl.overrideAttrs (o: {
