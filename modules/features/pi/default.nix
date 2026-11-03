@@ -452,7 +452,7 @@ in {
       {
         id = "qwen3.8-flash-next-iq3_xxs";
         name = "Qwen3.8-Flash-Next IQ3_XXS (local, Strata)";
-        contextWindow = 131072;
+        contextWindow = 262144;
         maxTokens = 32768;
         reasoning = true;
       }
@@ -548,8 +548,8 @@ in {
 
       # Auto-compaction fires when contextTokens > contextWindow -
       # reserveTokens, independent of maxTokens (which only caps one reply).
-      # pi's default reserve is 16384, so a 131072-token model compacts at
-      # 114688.
+      # pi's default reserve is 16384, so a 262144-token model compacts at
+      # 245760.
       #
       # reserveTokens is TWO budgets behind one number: the trigger above, and
       # the summarization call's own output limit (capped in turn by the model's
