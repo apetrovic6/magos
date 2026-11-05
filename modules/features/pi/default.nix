@@ -133,6 +133,10 @@
       envVar = "OPENAI_API_KEY";
       patterns = ["openai/*"];
     };
+    deepseek = {
+      envVar = "DEEPSEEK_API_KEY";
+      patterns = ["deepseek/*"];
+    };
   };
 
   # Custom (non-built-in) providers that need a full models.json entry.

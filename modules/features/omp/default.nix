@@ -138,6 +138,10 @@
       envVar = "OPENAI_API_KEY";
       patterns = ["openai/*"];
     };
+    deepseek = {
+      envVar = "DEEPSEEK_API_KEY";
+      patterns = ["deepseek/*"];
+    };
   };
 
   # Ambient cloud credentials that make pi/omp treat a provider as
