@@ -11,6 +11,10 @@
     startup = {
       quiet = true;
       enableTelemetry = false;
+      # The wizard records completion as `setupVersion` in config.yml, which
+      # the wrappers below overwrite on every launch, so it could never stick.
+      # Pinning setupVersion instead would reopen it on each upstream bump.
+      setupWizard = false;
     };
 
     # Use Everforest via the built-in theme name or hex palette.
@@ -22,7 +26,7 @@
     };
 
     # Default model role routing
-    modelRoles.default = "llama-swap/qwen36-35b-q4";
+    modelRoles.default = "strata/qwen3.8-flash-next-iq3_xxs";
 
     # enabledModels is NOT set here — it's injected at runtime by the
     # base wrapper when OMP_ENABLED_MODELS is set by the module wrapper.
@@ -220,7 +224,7 @@ in {
     );
 
     enabledModelsJson = builtins.toJSON (
-      ["llama-swap/*"]
+      ["strata/*"]
       ++ builtins.concatMap (name: sharedProviders.${name}.patterns) (builtins.attrNames enabledKeys)
     );
 
@@ -242,9 +246,9 @@ in {
         ""
       else ''
         mkdir -p "$HOME/.omp/agent" "$HOME/.omp/themes/everforest"
-        rm -f "$HOME/.omp/agent/config.yml" "$HOME/.omp/agent/models.json" "$HOME/.omp/agent/mcp.json" "$HOME/.omp/themes/everforest/theme.json"
+        rm -f "$HOME/.omp/agent/config.yml" "$HOME/.omp/agent/models.json" "$HOME/.omp/agent/models.yml" "$HOME/.omp/agent/mcp.json" "$HOME/.omp/themes/everforest/theme.json"
         cp ${configFiles.config} "$HOME/.omp/agent/config.yml"
-        cp ${configFiles.models} "$HOME/.omp/agent/models.json"
+        cp ${configFiles.models} "$HOME/.omp/agent/models.yml"
         cp ${configFiles.mcp} "$HOME/.omp/agent/mcp.json"
         cp ${themesDir}/everforest/theme.json "$HOME/.omp/themes/everforest/theme.json"
       '';
@@ -318,31 +322,25 @@ in {
     # OMP models: only custom (non-built-in) providers. Built-in providers
     # (qwen, anthropic, openai) ship in OMP's catalog — adding them here
     # would shadow it and force us to repeat baseUrl/api/models.
+    #
+    # Installed as models.yml (JSON is valid YAML). OMP only migrates
+    # models.json when no models.yml exists, so writing models.json leaves a
+    # stale migrated models.yml winning over every later change here.
+    #
+    # Mirrors strataModels in pi/default.nix -- see the notes there on why the
+    # id must match Strata's model_name and contextWindow its --max-context.
     ompModels = {
       providers = {
-        llama-swap = {
+        strata = {
           baseUrl = "http://127.0.0.1:8000/v1";
           api = "openai-completions";
           apiKey = "local";
           models = [
             {
-              id = "qwen36-35b-q4";
-              name = "Qwen3.6-35B-A3B IQ4_XS (local)";
-              contextWindow = 131072;
-              maxTokens = 8192;
-              reasoning = true;
-            }
-            {
-              id = "coder-30b";
-              name = "Qwen3-Coder-30B-A3B (local)";
-              contextWindow = 32768;
-              maxTokens = 8192;
-            }
-            {
-              id = "qwen38-flash-q3";
-              name = "Qwen3.8-Flash-Next IQ3_XXS (local, RAM-offloaded)";
-              contextWindow = 131072;
-              maxTokens = 8192;
+              id = "qwen3.8-flash-next-iq3_xxs";
+              name = "Qwen3.8-Flash-Next IQ3_XXS (local, Strata)";
+              contextWindow = 262144;
+              maxTokens = 32768;
               reasoning = true;
             }
           ];
@@ -380,9 +378,9 @@ in {
         wrapProgram $out/bin/omp \
           --run '
             mkdir -p "$HOME/.omp/agent" "$HOME/.omp/themes/everforest"
-            rm -f "$HOME/.omp/agent/config.yml" "$HOME/.omp/agent/models.json" "$HOME/.omp/agent/mcp.json" "$HOME/.omp/themes/everforest/theme.json"
+            rm -f "$HOME/.omp/agent/config.yml" "$HOME/.omp/agent/models.json" "$HOME/.omp/agent/models.yml" "$HOME/.omp/agent/mcp.json" "$HOME/.omp/themes/everforest/theme.json"
             cp ${ompConfigFile} "$HOME/.omp/agent/config.yml"
-            cp ${ompModelsFile} "$HOME/.omp/agent/models.json"
+            cp ${ompModelsFile} "$HOME/.omp/agent/models.yml"
             cp ${ompMcpFile} "$HOME/.omp/agent/mcp.json"
             cp ${ompThemesDir}/everforest/theme.json "$HOME/.omp/themes/everforest/theme.json"
           '
