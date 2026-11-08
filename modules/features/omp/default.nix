@@ -5,6 +5,19 @@
 }: let
   c = self.lib.colors.everforest-dark-soft;
 
+  # Sourced by the wrappers below, which run on every launch and may run
+  # concurrently. A unique temp file renamed into place means no launch ever
+  # sees another's missing or half-written file. mv -f because a store copy can
+  # be read-only, which otherwise makes mv prompt on a terminal.
+  ompInstallFn = ''
+    _omp_install() {
+      _omp_tmp="$(mktemp "$2.XXXXXX")"
+      cp "$1" "$_omp_tmp"
+      chmod 644 "$_omp_tmp"
+      mv -f "$_omp_tmp" "$2"
+    }
+  '';
+
   # OMP uses YAML config files instead of Pi's JSON.
   # Main config goes in ~/.omp/agent/config.yml
   ompConfig = {
@@ -245,13 +258,20 @@ in {
       if configFiles == null then
         ""
       else ''
+        ${ompInstallFn}
         mkdir -p "$HOME/.omp/agent" "$HOME/.omp/themes/everforest"
-        rm -f "$HOME/.omp/agent/config.yml" "$HOME/.omp/agent/models.json" "$HOME/.omp/agent/models.yml" "$HOME/.omp/agent/mcp.json" "$HOME/.omp/themes/everforest/theme.json"
-        cp ${configFiles.config} "$HOME/.omp/agent/config.yml"
-        cp ${configFiles.models} "$HOME/.omp/agent/models.yml"
-        cp ${configFiles.mcp} "$HOME/.omp/agent/mcp.json"
-        cp ${themesDir}/everforest/theme.json "$HOME/.omp/themes/everforest/theme.json"
+        rm -f "$HOME/.omp/agent/models.json"
+        _omp_install ${configFiles.models} "$HOME/.omp/agent/models.yml"
+        _omp_install ${configFiles.mcp} "$HOME/.omp/agent/mcp.json"
+        _omp_install ${themesDir}/everforest/theme.json "$HOME/.omp/themes/everforest/theme.json"
       '';
+
+    # Patched from the store copy, so config.yml is never visible without
+    # enabledModels. Without generated config, patch what is already there.
+    configSource =
+      if configFiles == null
+      then ''"$HOME/.omp/agent/config.yml"''
+      else toString configFiles.config;
 
     blockSnippet = lib.concatStringsSep "\n" (
       builtins.concatMap (
@@ -282,13 +302,18 @@ in {
           #    create agent.db next to them).
           ${configSetupSnippet}
 
-          # 5. Patch enabledModels into config.yml (JSON despite extension).
+          # 5. Install config.yml with enabledModels (JSON despite extension).
           _config="$HOME/.omp/agent/config.yml"
-          if [ -f "$_config" ]; then
-            ${pkgs.jq}/bin/jq --argjson em "$(< ${enabledModelsFile})" \
+          if [ -f ${configSource} ]; then
+            _config_tmp="$(mktemp "$_config.XXXXXX")"
+            if ${pkgs.jq}/bin/jq --argjson em "$(< ${enabledModelsFile})" \
               ".enabledModels = \$em" \
-              "$_config" > "$_config.tmp" \
-              && mv "$_config.tmp" "$_config"
+              ${configSource} > "$_config_tmp"; then
+              chmod 644 "$_config_tmp"
+              mv -f "$_config_tmp" "$_config"
+            else
+              rm -f "$_config_tmp"
+            fi
           fi
         '
       '';
@@ -379,12 +404,13 @@ in {
       postBuild = ''
         wrapProgram $out/bin/omp \
           --run '
+            ${ompInstallFn}
             mkdir -p "$HOME/.omp/agent" "$HOME/.omp/themes/everforest"
-            rm -f "$HOME/.omp/agent/config.yml" "$HOME/.omp/agent/models.json" "$HOME/.omp/agent/models.yml" "$HOME/.omp/agent/mcp.json" "$HOME/.omp/themes/everforest/theme.json"
-            cp ${ompConfigFile} "$HOME/.omp/agent/config.yml"
-            cp ${ompModelsFile} "$HOME/.omp/agent/models.yml"
-            cp ${ompMcpFile} "$HOME/.omp/agent/mcp.json"
-            cp ${ompThemesDir}/everforest/theme.json "$HOME/.omp/themes/everforest/theme.json"
+            rm -f "$HOME/.omp/agent/models.json"
+            _omp_install ${ompConfigFile} "$HOME/.omp/agent/config.yml"
+            _omp_install ${ompModelsFile} "$HOME/.omp/agent/models.yml"
+            _omp_install ${ompMcpFile} "$HOME/.omp/agent/mcp.json"
+            _omp_install ${ompThemesDir}/everforest/theme.json "$HOME/.omp/themes/everforest/theme.json"
           '
       '';
       passthru = {
