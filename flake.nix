@@ -117,25 +117,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Oh My Pi — enhanced fork of Pi with 31 built-in tools, LSP, subagents, etc.
-    # Used as a wrapper (not the home module) — see modules/features/omp/default.nix
-    # oh-my-pi's rust-toolchain.toml pins a dated nightly but its own lock can
-    # carry an older rust-overlay, which then fails eval with "Nightly <date>
-    # is not available". Follow ours so `nix flake update` refreshes both.
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    # Pinned to 18.16.0: the Nix build of 18.18.1 (e06a5c6, still broken at
-    # 88f9a60) fails in omp-native-deps with "`workspace.lints` was not defined"
-    # for crates/vendor/jaq-core. Back to the bare URL once that is fixed.
-    oh-my-pi = {
-      url = "github:can1357/oh-my-pi/88a69582c755bd000e8dc0290981fc787a4f400c";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.rust-overlay.follows = "rust-overlay";
-    };
-
     # ── Omarchy desktop (modules/features/omarchy.nix) ──────────────────
     #
     # nixarchy is consumed for its PACKAGE only -- 1924 lines of

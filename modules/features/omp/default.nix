@@ -317,7 +317,9 @@ in {
     lib,
     ...
   }: let
-    ompPkg = inputs.oh-my-pi.packages.${pkgs.stdenv.hostPlatform.system}.omp;
+    # From llm-agents rather than upstream's own flake, whose Nix build of
+    # 18.18.1 fails in omp-native-deps ("`workspace.lints` was not defined").
+    ompPkg = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.omp;
 
     # OMP models: only custom (non-built-in) providers. Built-in providers
     # (qwen, anthropic, openai) ship in OMP's catalog — adding them here
