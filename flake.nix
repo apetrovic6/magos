@@ -74,10 +74,11 @@
     };
 
     # numtide/nix-ai-tools, renamed. The bare .../llm-agents (no .nix) 404s.
-    llm-agents = {
-      url = "github:numtide/llm-agents.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    #
+    # No nixpkgs `follows`: its recipes are tested against its own pin, not
+    # ours. Following ours, omp 18.18.1 failed at llm-agents e7ec2ce in
+    # zstd-sys's build script, while the same rev on its own nixpkgs built.
+    llm-agents.url = "github:numtide/llm-agents.nix";
 
     # Nautili (DevZero's opencode fork), packaged from its prebuilt npm binary.
     nautili = {
