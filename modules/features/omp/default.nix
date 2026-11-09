@@ -259,10 +259,13 @@ in {
         ""
       else ''
         ${ompInstallFn}
-        mkdir -p "$HOME/.omp/agent" "$HOME/.omp/themes/everforest"
+        mkdir -p "$HOME/.omp/agent/extensions" "$HOME/.omp/themes/everforest"
         rm -f "$HOME/.omp/agent/models.json"
         _omp_install ${configFiles.models} "$HOME/.omp/agent/models.yml"
         _omp_install ${configFiles.mcp} "$HOME/.omp/agent/mcp.json"
+        ${lib.optionalString (configFiles ? herdrExtension) ''
+          _omp_install ${configFiles.herdrExtension} "$HOME/.omp/agent/extensions/herdr-agent-state.ts"
+        ''}
         _omp_install ${themesDir}/everforest/theme.json "$HOME/.omp/themes/everforest/theme.json"
       '';
 
@@ -338,6 +341,7 @@ in {
 
   # ── Base package: config, models, themes ─────────────────────────────
   perSystem = {
+    self',
     pkgs,
     lib,
     ...
@@ -381,6 +385,12 @@ in {
     ompMcpFile = pkgs.writeText "omp-mcp.json" (builtins.toJSON ompMcp);
     ompThemeFile = pkgs.writeText "everforest.json" (builtins.toJSON everforestOmpTheme);
 
+    # Reports omp's state to herdr when omp runs in a herdr pane, and is a
+    # no-op outside one. Installed where `herdr integration install omp` would
+    # put it, so `herdr integration status` sees it as current -- see
+    # modules/features/herdr/default.nix.
+    herdrExtension = "${self'.packages.herdr-integrations}/omp/herdr-agent-state.ts";
+
     # Theme dir: ~/.omp/themes/everforest/theme.json
     ompThemesDir = pkgs.symlinkJoin {
       name = "omp-themes";
@@ -405,11 +415,12 @@ in {
         wrapProgram $out/bin/omp \
           --run '
             ${ompInstallFn}
-            mkdir -p "$HOME/.omp/agent" "$HOME/.omp/themes/everforest"
+            mkdir -p "$HOME/.omp/agent/extensions" "$HOME/.omp/themes/everforest"
             rm -f "$HOME/.omp/agent/models.json"
             _omp_install ${ompConfigFile} "$HOME/.omp/agent/config.yml"
             _omp_install ${ompModelsFile} "$HOME/.omp/agent/models.yml"
             _omp_install ${ompMcpFile} "$HOME/.omp/agent/mcp.json"
+            _omp_install ${herdrExtension} "$HOME/.omp/agent/extensions/herdr-agent-state.ts"
             _omp_install ${ompThemesDir}/everforest/theme.json "$HOME/.omp/themes/everforest/theme.json"
           '
       '';
@@ -420,6 +431,7 @@ in {
           config = ompConfigFile;
           models = ompModelsFile;
           mcp = ompMcpFile;
+          inherit herdrExtension;
         };
       };
     };

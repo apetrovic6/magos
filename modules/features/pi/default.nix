@@ -424,6 +424,7 @@ in {
 
   # ── Base package: config symlinks, models, themes ────────────────────
   perSystem = {
+    self',
     pkgs,
     lib,
     ...
@@ -515,6 +516,12 @@ in {
       src = ./_extensions;
     };
 
+    # Reports pi's state (working/blocked/idle) to herdr when pi runs in a
+    # herdr pane, and is a no-op outside one. Stands in for `herdr integration
+    # install pi`, which would write into the agent dir's extensions/ -- see
+    # modules/features/herdr/default.nix.
+    herdrExtension = "${self'.packages.herdr-integrations}/pi";
+
     # MCP servers for pi-mcp-adapter, mirroring the mcp block in
     # opencode.nix. Pi has no native MCP; the adapter supplies it.
     #
@@ -541,7 +548,7 @@ in {
       theme = "everforest";
       # Resource paths may be absolute, so the theme dir needs no symlink.
       themes = ["${themesDir}"];
-      extensions = ["${magosExtensions}"];
+      extensions = ["${magosExtensions}" herdrExtension];
       packages = [
         "${webAccess}"
         "${mcpAdapter}"
