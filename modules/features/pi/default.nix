@@ -256,7 +256,8 @@ in {
       then cfg.enabledModels
       else
         ["strata/*"]
-        ++ builtins.concatMap (name: providers.${name}.patterns) (builtins.attrNames enabledKeys);
+        ++ builtins.concatMap (name: providers.${name}.patterns) (builtins.attrNames enabledKeys)
+        ++ cfg.extraEnabledModels;
 
     enabledModelsJson = builtins.toJSON enabledModels;
 
@@ -369,6 +370,19 @@ in {
           format: exact IDs, fuzzy matches, or `provider/*` globs. Listing a
           provider with no resolvable credentials produces a
           "No models match pattern" warning.
+        '';
+      };
+
+      extraEnabledModels = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [];
+        example = ["openai-codex/*"];
+        description = ''
+          Extra patterns appended to the derived enabledModels whitelist
+          (ignored when `enabledModels` is set explicitly). Use for
+          OAuth-login providers such as `openai-codex` (ChatGPT `/login`):
+          they have no apiKeys entry, so the derived list would otherwise
+          hide all of their models.
         '';
       };
 

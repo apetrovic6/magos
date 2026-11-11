@@ -239,6 +239,7 @@ in {
     enabledModelsJson = builtins.toJSON (
       ["strata/*"]
       ++ builtins.concatMap (name: sharedProviders.${name}.patterns) (builtins.attrNames enabledKeys)
+      ++ cfg.extraEnabledModels
     );
 
     # Passed to jq via a store FILE, never an inline literal — the --run
@@ -330,6 +331,18 @@ in {
         default = self.packages.${pkgs.stdenv.hostPlatform.system}.omp;
         defaultText = lib.literalExpression "self.packages.\${system}.omp";
         description = "Base OMP package to wrap with secret sourcing.";
+      };
+
+      extraEnabledModels = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [];
+        example = ["openai-codex/*"];
+        description = ''
+          Extra provider/model patterns appended to the enabledModels
+          whitelist. Use for OAuth-login providers (e.g. `openai-codex` after
+          `/login` with a ChatGPT account): they have no apiKeys entry, so the
+          derived whitelist would otherwise hide all of their models.
+        '';
       };
     };
 
