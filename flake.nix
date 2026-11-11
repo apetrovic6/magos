@@ -81,6 +81,7 @@
     llm-agents.url = "github:numtide/llm-agents.nix";
 
     # Nautili (DevZero's opencode fork), packaged from its prebuilt npm binary.
+    # nix flake update nautili --option access-tokens ""
     nautili = {
       url = "github:devzero-inc/nautili-harness-flake";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -134,7 +135,7 @@
     # nixarchy's sops-nix only ever sits in the lock graph and is never
     # evaluated, built, or able to collide.
     nixarchy = {
-      url = "github:olafkfreund/nixarchy/v4.5.0-1";
+      url = "github:olafkfreund/nixarchy/v4.5.0-2";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
