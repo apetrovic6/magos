@@ -35,6 +35,7 @@
   flake.nixosModules.nixarchy =
     {
       config,
+      options,
       lib,
       pkgs,
       ...
@@ -91,6 +92,25 @@
           inherit (cfg) user;
           displayManager = lib.mkDefault false;
         };
+
+        # omatheme's hyprchroma applies each Omarchy theme's icon set
+        # (icons.theme, e.g. everforest -> Yaru-sage) to GTK and Qt, but only
+        # after checking it is installed -- in /usr/share/icons or
+        # ~/.local/share/icons, neither of which NixOS uses. So it always
+        # logged "requests icon theme 'Yaru-sage', which is not installed" and
+        # skipped it, although yaru-theme is in the system profile. Teach both
+        # checks the NixOS profile dirs.
+        programs.nixarchyThemeEngine.package =
+          options.programs.nixarchyThemeEngine.package.default.overrideAttrs
+            (old: {
+              postPatch = (old.postPatch or "") + ''
+                for file in lib/sync-gtk-theme lib/sync-qt-kde-theme; do
+                  substituteInPlace "$file" --replace-fail \
+                    '[[ -d "/usr/share/icons/$value" || \' \
+                    '[[ -d "/usr/share/icons/$value" || -d "/run/current-system/sw/share/icons/$value" || -d "/etc/profiles/per-user/''${USER:-$(id -un)}/share/icons/$value" || \'
+                done
+              '';
+            });
 
         programs.hyprland = {
           package = lib.mkForce pkgs.hyprland;
