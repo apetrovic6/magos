@@ -114,12 +114,13 @@
 
         # nixarchy sets boot.kernelPackages = mkDefault linuxPackages_latest
         # (to get Panther Lake fixes upstream Omarchy backports), so turning it
-        # on silently moved enginseer from the 6.18 LTS to 7.3. On that kernel
-        # Brave's GPU process drove i915 into "the execbuf ioctl keeps returning
-        # ENOMEM" and Mesa aborted, taking Hyprland down with it -- with 21 GiB
-        # free and the same Mesa/Hyprland/Brave that worked on 6.18. Back to
-        # the NixOS default; 999 beats nixarchy's mkDefault (1000), and a
-        # machine that sets its own kernel still wins.
+        # on silently moves a machine off the kernel its NVIDIA module and the
+        # rest of its setup were tested on (enginseer: 6.18 LTS -> 7.3). Keep
+        # the NixOS default instead. 999 beats nixarchy's mkDefault (1000), and
+        # a machine that sets its own kernel still wins.
+        #
+        # (This was first suspected of causing a Brave-crashes-Hyprland i915
+        # ENOMEM; it did not -- the crash reproduces on 6.18 too.)
         boot.kernelPackages = lib.mkOverride 999 pkgs.linuxPackages;
 
         programs.hyprland = {
