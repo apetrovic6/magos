@@ -103,6 +103,17 @@
   #   }
   # ];
   #
+  # The one shipped: start Claude as a chosen subscription account, in a pane
+  # of its own so herdr detects it as a claude agent. Needs claude-as on PATH
+  # (magos.claudeAccounts, modules/features/claude-accounts).
+  command = [
+    {
+      key = "prefix+alt+c";
+      type = "pane";
+      command = "claude-as";
+    }
+  ];
+
   # `[keys.indexed]` (tabs/workspaces/agents) is also still parsed, but upstream
   # deprecates it in favour of switch_tab, switch_workspace, and focus_agent, so
   # it is deliberately not part of this skeleton.

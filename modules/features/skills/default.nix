@@ -11,6 +11,11 @@
     # the source of the same herdr build the server runs, so its CLI syntax
     # matches the installed binary. It only triggers when herdr is named.
     herdr = "${pkgs.herdr.src}/skills/herdr";
+
+    # Keeps a Claude Code that an agent starts outside its own process (a
+    # herdr pane, a new terminal) on the session's account, via claude-as
+    # (modules/features/claude-accounts).
+    claude-accounts = ../claude-accounts/skill;
   };
 in {
   # Installs the skills for every agent at once:
