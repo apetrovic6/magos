@@ -49,10 +49,11 @@ have_omarchy() {
 # id<TAB>home, one per account, main first.
 homes() {
   if have_omarchy; then
-    # Columns: id, home, primary flag. The primary row is keyed by its label,
-    # so normalise it to `main`.
-    omarchy-agent-account-state homes claude | awk -F'\t' '
-      $3 == "1" { print "main\t" $2; next }
+    # Columns: id, home, ACTIVE flag (which account new sessions start as --
+    # not which one is primary). The primary is the account whose home is
+    # ~/.claude; its id is `Main`, normalised to `main`.
+    omarchy-agent-account-state homes claude | awk -F'\t' -v primary="$primary" '
+      $2 == primary { print "main\t" $2; next }
       { print tolower($1) "\t" $2 }'
   else
     printf 'main\t%s\n' "$primary"
