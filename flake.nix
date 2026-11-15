@@ -81,9 +81,11 @@
     llm-agents.url = "github:numtide/llm-agents.nix";
 
     # Nautili (DevZero's opencode fork), packaged from its prebuilt npm binary.
-    # nix flake update nautili --option access-tokens ""
+    # Over SSH, not the github: tarball API: the work org rejects personal access tokens
+    # (HTTP 403), so a github: input only fetched with `--option access-tokens ""`, and any
+    # fresh evaluation (CI, a new machine, a tool like auspex) failed. SSH uses the key.
     nautili = {
-      url = "github:devzero-inc/nautili-harness-flake";
+      url = "git+ssh://git@github.com/devzero-inc/nautili-harness-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -185,49 +187,63 @@
     };
   };
 
-  outputs = inputs @ {
-    self,
-    flake-parts,
-    import-tree,
-    ...
-  }:
-    flake-parts.lib.mkFlake {inherit inputs;} {
+  outputs =
+    inputs@{
+      self,
+      flake-parts,
+      import-tree,
+      ...
+    }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         (import-tree ./modules)
         inputs.treefmt-nix.flakeModule
         inputs.home-manager.flakeModules.home-manager
       ];
 
-      flake.nixosModules.default = {
-        pkgs,
-        lib,
-        config,
-        ...
-      }: {
-        imports = [
-          self.nixosModules.stylix
-        ];
+      flake.nixosModules.default =
+        {
+          pkgs,
+          lib,
+          config,
+          ...
+        }:
+        {
+          imports = [
+            self.nixosModules.stylix
+          ];
 
-        # magos.helix.theme = "everforest_dark";
-        magos.stylix.enable = true;
-      };
-
-      perSystem = {
-        config,
-        self',
-        inputs',
-        pkgs,
-        system,
-        ...
-      }: {
-        treefmt = {
-          projectRootFile = "flake.nix";
-          programs.nixfmt.enable = true; # Nix formatter
-          # add more: programs.prettier.enable = true; etc.
+          # magos.helix.theme = "everforest_dark";
+          magos.stylix.enable = true;
         };
 
-        devShells.default = with pkgs; mkShell {packages = [nil nixd steel steel-language-server];};
-      };
+      perSystem =
+        {
+          config,
+          self',
+          inputs',
+          pkgs,
+          system,
+          ...
+        }:
+        {
+          treefmt = {
+            projectRootFile = "flake.nix";
+            programs.nixfmt.enable = true; # Nix formatter
+            # add more: programs.prettier.enable = true; etc.
+          };
+
+          devShells.default =
+            with pkgs;
+            mkShell {
+              packages = [
+                nil
+                nixd
+                steel
+                steel-language-server
+              ];
+            };
+        };
 
       # flake = {
       # The usual flake attributes can be defined here, including system-

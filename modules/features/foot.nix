@@ -2,13 +2,15 @@
   self,
   inputs,
   ...
-}: let
+}:
+let
   defaultTheme = self.lib.colors.everforest-dark-soft;
 
-  makeFootPackage = {
-    pkgs,
-    colors,
-  }:
+  makeFootPackage =
+    {
+      pkgs,
+      colors,
+    }:
     inputs.wrapper-modules.wrappers.foot.wrap {
       inherit pkgs;
       settings = {
@@ -53,27 +55,42 @@
         };
       };
     };
-in {
-  flake.nixosModules.foot = {
-    pkgs,
-    config,
-    ...
-  }: let
-    colors = config.lib.stylix.colors or defaultTheme;
-  in {
-    programs.foot = {
-      enable = true;
-      package = makeFootPackage {inherit pkgs colors;};
-      enableBashIntegration = true;
-      enableZshIntegration = true;
-      xdg.serverAutostart = true;
+in
+{
+  flake.nixosModules.foot =
+    {
+      pkgs,
+      config,
+      ...
+    }:
+    let
+      colors = config.lib.stylix.colors or defaultTheme;
+    in
+    {
+      programs.foot = {
+        enable = true;
+        package = makeFootPackage { inherit pkgs colors; };
+        enableBashIntegration = true;
+        enableZshIntegration = true;
+        xdg.serverAutostart = true;
+      };
     };
-  };
 
-  perSystem = {pkgs, ...}: {
-    packages.foot = makeFootPackage {
-      inherit pkgs;
-      colors = defaultTheme;
+  # foot is Wayland-only: nixpkgs refuses it on darwin, and flake-parts checks every
+  # `packages` entry, so an unconditional one breaks evaluation of every darwin consumer of
+  # this flake's packages (genetor pulls helix and herdr from here).
+  perSystem =
+    {
+      pkgs,
+      lib,
+      ...
+    }:
+    {
+      packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+        foot = makeFootPackage {
+          inherit pkgs;
+          colors = defaultTheme;
+        };
+      };
     };
-  };
 }

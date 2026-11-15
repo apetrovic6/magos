@@ -1527,15 +1527,15 @@
       "locked": {
         "lastModified": 1794303989,
         "narHash": "sha256-w8xi4+9QqpXI6iftEAvCje+eApNAjoyVa29a3ONTFFg=",
-        "owner": "devzero-inc",
-        "repo": "nautili-harness-flake",
+        "ref": "refs/heads/main",
         "rev": "631d713538d52de5dec1ec292bfc121cadd56425",
-        "type": "github"
+        "revCount": 6,
+        "type": "git",
+        "url": "ssh://git@github.com/devzero-inc/nautili-harness-flake"
       },
       "original": {
-        "owner": "devzero-inc",
-        "repo": "nautili-harness-flake",
-        "type": "github"
+        "type": "git",
+        "url": "ssh://git@github.com/devzero-inc/nautili-harness-flake"
       }
     },
     "nix-flatpak": {
