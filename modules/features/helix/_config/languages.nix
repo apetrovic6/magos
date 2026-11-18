@@ -226,15 +226,25 @@
     }
     {
       # ocamllsp and ocamlformat come from the project's dev shell, so launch
-      # helix from inside it. No `formatter`: ocamllsp formats by calling
-      # ocamlformat itself, which also finds the project's .ocamlformat.
+      # helix from inside it. ocamlformat reads the buffer on stdin; `--name`
+      # gives it the real path so it finds the project's .ocamlformat and
+      # reports errors against the right file. It refuses to format without
+      # a .ocamlformat in the project.
       name = "ocaml";
       language-servers = ["ocamllsp"];
+      formatter = {
+        command = "ocamlformat";
+        args = ["-" "--impl" "--name=%{buffer_name}"];
+      };
       auto-format = true;
     }
     {
       name = "ocaml-interface";
       language-servers = ["ocamllsp"];
+      formatter = {
+        command = "ocamlformat";
+        args = ["-" "--intf" "--name=%{buffer_name}"];
+      };
       auto-format = true;
     }
     {
