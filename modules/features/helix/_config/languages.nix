@@ -225,6 +225,19 @@
       };
     }
     {
+      # ocamllsp and ocamlformat come from the project's dev shell, so launch
+      # helix from inside it. No `formatter`: ocamllsp formats by calling
+      # ocamlformat itself, which also finds the project's .ocamlformat.
+      name = "ocaml";
+      language-servers = ["ocamllsp"];
+      auto-format = true;
+    }
+    {
+      name = "ocaml-interface";
+      language-servers = ["ocamllsp"];
+      auto-format = true;
+    }
+    {
       # Injection-only: reached from the `view!` rule in
       # _config/queries/rust/injections.scm, never by filename. `.rs` stays the
       # `rust` language, with rust-analyzer and the stock Rust grammar intact --
