@@ -491,6 +491,29 @@ in {
             apiKey = "local";
             models = strataModels;
           };
+
+          # llama-swap on :8001 (omnissiah machines/phalanx/llama-swap.nix),
+          # beside Strata, for models Strata cannot run. The model id selects
+          # what llama-swap loads, so it must match the entry name there, and
+          # contextWindow must match that entry's ctxSize.
+          llama-swap = {
+            baseUrl = "http://127.0.0.1:8001/v1";
+            api = "openai-completions";
+            apiKey = "local";
+            models = [
+              {
+                id = "inkling2-mini-q4";
+                name = "Inkling 2 Mini Q4_K_XL (local, llama-swap)";
+                contextWindow = 131072;
+                # Deliberately low: the model card warns it can get stuck in
+                # long reasoning loops, and thinking cannot be fully disabled.
+                maxTokens = 8192;
+                reasoning = true;
+                # The server loads the mmproj, so images work.
+                input = ["text" "image"];
+              }
+            ];
+          };
         }
         //
         # Custom (non-built-in) providers from customProviderModels.

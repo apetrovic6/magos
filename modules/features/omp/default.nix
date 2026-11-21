@@ -389,6 +389,26 @@ in {
             }
           ];
         };
+
+        # llama-swap on :8001 (omnissiah machines/phalanx/llama-swap.nix),
+        # beside Strata. id must match the llama-swap entry name, and
+        # contextWindow its ctxSize.
+        llama-swap = {
+          baseUrl = "http://127.0.0.1:8001/v1";
+          api = "openai-completions";
+          apiKey = "local";
+          models = [
+            {
+              id = "inkling2-mini-q4";
+              name = "Inkling 2 Mini Q4_K_XL (local, llama-swap)";
+              contextWindow = 131072;
+              # Low on purpose: the card warns of long reasoning loops.
+              maxTokens = 8192;
+              reasoning = true;
+              input = ["text" "image"];
+            }
+          ];
+        };
       };
     };
 
