@@ -237,7 +237,7 @@ in {
     );
 
     enabledModelsJson = builtins.toJSON (
-      ["strata/*"]
+      ["strata/*" "llama-swap/*"]
       ++ builtins.concatMap (name: sharedProviders.${name}.patterns) (builtins.attrNames enabledKeys)
       ++ cfg.extraEnabledModels
     );

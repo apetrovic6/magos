@@ -255,7 +255,7 @@ in {
       if cfg.enabledModels != null
       then cfg.enabledModels
       else
-        ["strata/*"]
+        ["strata/*" "llama-swap/*"]
         ++ builtins.concatMap (name: providers.${name}.patterns) (builtins.attrNames enabledKeys)
         ++ cfg.extraEnabledModels;
 
