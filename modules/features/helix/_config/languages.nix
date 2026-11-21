@@ -237,6 +237,49 @@
         args = ["-" "--impl" "--name=%{buffer_name}"];
       };
       auto-format = true;
+
+      # earlybird debugs bytecode only, and must be built against the same
+      # compiler as the debuggee, so like ocamllsp it comes from the project's
+      # dev shell (ocamlPackages.earlybird), not from the helix wrapper.
+      #
+      # The project needs two things in dune, or breakpoints never bind:
+      #   - `(modes byte exe)` on the executable, to get a .bc at all;
+      #   - `(map_workspace_root false)` in dune-project (lang dune >= 3.7).
+      #     By default dune rewrites the recorded source dirs to
+      #     /workspace_root, earlybird can't find the sources, and every
+      #     breakpoint stays unverified while the program runs straight
+      #     through. Verified against a plain ocamlc -g build, which works.
+      #
+      # When it stops, helix opens the _build/default copy of the source (that
+      # is the path in the debug info); breakpoints set in the real file still
+      # bind.
+      debugger = {
+        name = "ocamlearlybird";
+        transport = "stdio";
+        command = "ocamlearlybird";
+        args = ["debug"];
+        templates = [
+          {
+            name = "bytecode";
+            request = "launch";
+            completion = [
+              {
+                name = "bytecode executable";
+                completion = "filename";
+                default = "_build/default/bin/main.bc";
+              }
+            ];
+            args = {
+              program = "{0}";
+              # Debuggee stdout/stderr come back as DAP output events. The
+              # other consoles make earlybird send runInTerminal, which helix
+              # cannot answer during launch -- see the codelldb note above.
+              console = "internalConsole";
+              stopOnEntry = false;
+            };
+          }
+        ];
+      };
     }
     {
       name = "ocaml-interface";
